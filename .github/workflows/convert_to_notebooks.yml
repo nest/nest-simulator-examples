@@ -26,7 +26,7 @@ jobs:
         run: |
           # mkdir pynest/notebooks
           sphx_glr_python_to_jupyter.py $(find copies/examples/ -iname "*.py")
-          # mv pynest/examples/* pynest/notebooks
+          ls copies/examples/*.ipynb
           grep -rl '"display_name": "Python 3"' copies/examples | xargs sed -i 's/"display_name": "Python 3"/"display_name": "EBRAINS-23.09"/g'
           grep -rl '"name": "python3"' copies/examples | xargs sed -i 's/"name": "python3"/"name": "ebrains-23.09"/g'
 
