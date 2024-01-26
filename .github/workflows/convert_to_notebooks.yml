@@ -1,3 +1,4 @@
+---
 name: Convert examples
 
 on: [push, pull_request]
