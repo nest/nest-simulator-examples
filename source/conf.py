@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'nest-examples'
+project = 'NEST examples'
 copyright = '2024, JM'
 author = 'JM'
 release = '1'
@@ -17,8 +17,14 @@ release = '1'
 extensions = [
     "sphinx.ext.intersphinx",
     "sphinx_design",
+    "sphinx_copybutton",
     "nbsphinx"
 ]
+
+
+copybutton_prompt_text = ">>> "
+# The output lines will not be copied if set to True
+copybutton_only_copy_prompt_lines = True
 
 templates_path = ['_templates']
 # exclude_patterns = []
@@ -27,10 +33,19 @@ nbsphinx_execute = "never"
 nbsphinx_prolog =  """
 {% set docname = env.doc2path(env.docname, base=None) %}
 
-
 .. only:: html
 
+.. container:: attention
+
+   You are now viewing a page outside NEST documentation. :doc:`Return to NEST documentation <nest:index>`
+
+|
+
 {% if "brunel" not in docname %}
+
+|
+
+
 .. grid:: 2
 
    .. grid-item-card:: Run this notebook in your browser
@@ -39,7 +54,7 @@ nbsphinx_prolog =  """
       .. image:: https://nest-simulator.org/TryItOnEBRAINS.png
          :target: https://lab.ebrains.eu/hub/user-redirect/\
 git-pull?repo=https%3A%2F%2Fgithub.com%2Fnest%2Fnest-simulator-examples&urlpath=lab\
-%2Ftree%2Fnest-simulator-examples%2Fnotebooks%2Fnotebooks%2F{{docname}}&branch=main
+%2Ftree%2Fnest-simulator-examples%2Fnotebooks%2Fnotebooks%2F{{docname}}&branch=sphinx-setup
          :width: 300px
 
 
@@ -65,6 +80,7 @@ git-pull?repo=https%3A%2F%2Fgithub.com%2Fnest%2Fnest-simulator-examples&urlpath=
       :download:`{{ docname }}`
 
 
+
 """
 
 intersphinx_mapping = {
@@ -73,7 +89,7 @@ intersphinx_mapping = {
     "pynn": ("https://neuralensemble.org/docs/PyNN/", None),
     "elephant": ("https://elephant.readthedocs.io/en/latest/", None),
     "desktop": ("https://nest-desktop.readthedocs.io/en/latest/", None),
-    "nest": ("https://nest-simulator.readthedocs.io/en/latest/", None),
+    "nest": ("https://nest-simulator.readthedocs.io/en/v3.5/", None),
     "gpu": ("https://nest-gpu.readthedocs.io/en/latest/", None),
 }
 
@@ -89,6 +105,7 @@ html_theme_options = {
     # 'google_analytics_account': 'UA-XXXXX',
     # Specify a base_url used to generate sitemap.xml. If not
     # specified, then no sitemap will be built.
+    "nav_title": "NEST examples",
     "base_url": "https://nest-simulator.readthedocs.io/en/latest/",
     "html_minify": False,
     "html_prettify": False,
@@ -97,7 +114,7 @@ html_theme_options = {
     "color_primary": "orange",
     "color_accent": "white",
     "theme_color": "ff6633",
-    "master_doc": True,
+    "master_doc": False,
     # Set the repo location to get a badge with stats
     "repo_url": "https://github.com/nest/nest-simulator/",
     "repo_name": "NEST Simulator",
