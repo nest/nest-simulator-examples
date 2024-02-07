@@ -247,7 +247,6 @@ PyNEST examples
 .. toctree::
    :hidden:
 
-   running_notebooks
    ../notebooks/notebooks/sudoku/index
    ../notebooks/notebooks/pong/index
    ../notebooks/notebooks/spatial/index
@@ -354,10 +353,3 @@ PyNEST examples
 
    *
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

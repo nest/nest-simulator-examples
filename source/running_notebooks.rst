@@ -13,7 +13,7 @@ Prerequisites
     If you do not have an account yet, you can sign up here: https://ebrains.eu/register.
 
 
-1. Click on the |tryit| button in the desired :ref:`example notebook <pynest_examples>`
+1. Click on the |tryit| button in the desired :ref:`example notebook <nest:pynest_examples>`
 
 
    You will be redirected to https://lab.ebrains.eu
