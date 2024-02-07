@@ -100,6 +100,13 @@ section#kernel-attributes-nest-nestmodule dd {
    font-weight: bold;
 }
 
+.attention {
+  border-style: solid;
+  border-width: 1px;
+  text-align: center;
+  font-style: italic;
+}
+
 /*************************************************************
  * Rules for  mermaid diagrams
  *************************************************************/
@@ -150,7 +157,7 @@ figure.align-default {
 }
 
 [data-md-color-primary=orange] .md-tabs {
-  background-color: var(--nest-orange);
+  background-color: var(--nest-blue);
  }
 
 /* To add matching styling for the header in index.html */
@@ -172,7 +179,7 @@ div[role="main"] .md-source {
 }
 
 [data-md-color-primary="orange"] .md-header, [data-md-color-primary="orange"] .md-hero {
-  background-color: var(--nest-orange);
+  background-color: var(--nest-blue);
 }
 [data-md-color-primary="orange"] .md-nav__link--active, [data-md-color-primary="orange"] .md-nav__link:active {
 	color: var(--nest-orange);
@@ -660,8 +667,8 @@ MEDIAQUERIES
 
 .particle-img
  {
-  background-image: linear-gradient(to bottom, rgba(255, 102, 51, 0.63), rgba(255, 102, 51, 0.1), rgba(255, 102, 51, 0.73)), url('../img/background-particles-flattened.png');
-  background-color: #ff6633;
+  /*background-image: linear-gradient(to bottom, rgba(18, 129, 179, 0.63), rgba(18, 129, 179, 0.2), rgba(18, 129, 179, 0.73)), url('../img/background-particles-flattened_blue_white.png');*/
+  background: linear-gradient(to bottom, #1281b3, #2093c6, #1281b3);
   height: 240px;
  }
 
