@@ -4,3 +4,4 @@ sphinx-design>=0.4.1
 sphinx-gallery>=0.13.0
 sphinx-material>=0.0.35
 nbsphinx>=0.9.1
+sphinx-copybutton
