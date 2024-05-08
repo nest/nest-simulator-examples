@@ -7,7 +7,7 @@ dependencies:
   - nest-simulator
   - pip:
     # To build and work with PyNEST
-    - -r https://raw.githubusercontent.com/nest/nest-simulator/master/requirements_pynest.txt
+    # - -r https://raw.githubusercontent.com/nest/nest-simulator/master/requirements_pynest.txt
     # To run NEST testsuite
     - -r https://raw.githubusercontent.com/nest/nest-simulator/master/requirements_testing.txt
     # To build NEST documentation
