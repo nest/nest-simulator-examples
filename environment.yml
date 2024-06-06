@@ -5,6 +5,7 @@ channels:
 dependencies:
   - matplotlib
   - nest-simulator
+  - nestml
   - numpy
   - pandas
   - pip
