@@ -1,2 +1,0 @@
-SONATA networks in NEST
-=======================
