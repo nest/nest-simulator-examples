@@ -1,0 +1,16 @@
+# get nest version from experimental ebrains
+#
+# env:
+#   NEST_VERSION: $nest_version
+#   EBRAINS_VERSION: "experimental"
+#   EBRAINS_DISPLAY_NAME: "Experimental"
+#
+#
+#checkout new branch this repo with nest version
+#
+#checkout nest-simulator
+#
+#copy files to new branch
+#
+#convert to notebooks
+#
