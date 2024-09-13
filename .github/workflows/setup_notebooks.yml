@@ -32,13 +32,6 @@ jobs:
       NAME: ebrains-experimental
       DISPLAY_NAME: "EBRAINS-experimental"
     steps:
-      - name: Set environment variable
-        run: echo "MY_ENV_VAR=myValue" >> $GITHUB_ENV
-
-      - name: Use test variable
-        run: |
-          echo "The value of MY_ENV_VAR is $MY_ENV_VAR"
-
       - name: Get NEST version
         run: echo "NEST_VERSION=$(wget -q -O - 'https://gitlab.ebrains.eu/ri/tech-hub/platform/esd/ebrains-spack-builds/-/raw/master/spack.yaml?ref_type=heads&inline=false' | sed -rn 's/^\s.*nest@([0-9]\.[0-9]).*/\1/p')" >> $GITHUB_ENV
 
@@ -54,7 +47,7 @@ jobs:
           git checkout -b 'nest$NEST_VERSION'
 
       - name: Run file copy action
-        uses:
+        uses: DeWildeDaan/copy-from-repo@main
         with:
           source_repo: "jessica-mitchell/nest-simulator"
           source_path: "pynest/examples"
