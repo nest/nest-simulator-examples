@@ -1,3 +1,4 @@
+#
 # get nest version from experimental ebrains
 #
 # env:
@@ -14,3 +15,22 @@
 #
 #convert to notebooks
 #
+#name: Target Workflow
+
+on:
+  repository_dispatch:
+    types: [Integration-with-Automation]
+
+run-name: ${{ github.actor }} is testing out GitHub Actions  🚀
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Run a one-line script
+        run: echo Hello, world!
