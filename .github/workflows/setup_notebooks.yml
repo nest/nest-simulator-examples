@@ -52,7 +52,7 @@ jobs:
         uses: DeWildeDaan/copy-from-repo@main
         with:
           source_repo: "jessica-mitchell/nest-simulator"
-          source_path: "$(find pynest/examples -iname '*.py'"
+          source_path: "pynest/examples"
           destination_path: "footest"
           commit_message: "Test copy commit"
           create_pr: false
