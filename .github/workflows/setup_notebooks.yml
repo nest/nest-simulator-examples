@@ -56,13 +56,14 @@ jobs:
           rc_number=1 # Adjust if needed
           BRANCH_NAME="v${NEST_VERSION}_rc${rc_number}"
           echo "Branch name is: $BRANCH_NAME"
-          echo "##[set-output name=branch;]$BRANCH_NAME"
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
       - name: Checkout nest-simualtor repo
         uses: actions/checkout@v4
         with:
           repository: jessica-mitchell/nest-simulator
-          ref: ${{ steps.version_tag.outputs.branch }}  # Use the dynamically created branch
+          ref: refs/heads/jupytext
+          #ref: ${{ steps.version_tag.outputs.branch }}  # Use the dynamically created branch
           token: ${{ secrets.API_TOKEN_GITHUB }}
           path: nest-simulator # Directory to place the repository in
 
