@@ -44,7 +44,7 @@ jobs:
           wget -q -O spack.txt 'https://gitlab.ebrains.eu/ri/tech-hub/platform/esd/ebrains-spack-builds/-/raw/master/spack.yaml?ref_type=heads&inline=false'
           sed -rn 's/^\s.*nest@([0-9]\.[0-9]).*/\1/p' spack.txt >> nestvers.txt
           cat nestvers.txt
-          echo "NEST_VERSION = 3.8" >> $GITHUB_ENV
+          echo "NEST_VERSION=3.8" >> $GITHUB_ENV
           echo "NEST_VERSION IS $NEST_VERSION"
 
           #run: echo "NEST_VERSION = $(wget -q -O - 'https://gitlab.ebrains.eu/ri/tech-hub/platform/esd/ebrains-spack-builds/-/raw/master/spack.yaml?ref_type=heads&inline=false' | sed -rn 's/^\s.*nest@([0-9]\.[0-9]).*/\1/p')" >> $GITHUB_ENV
