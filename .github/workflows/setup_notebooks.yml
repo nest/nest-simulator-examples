@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Get NEST version
-        run: echo "NEST_VERSION = $(wget -q -O - 'https://gitlab.ebrains.eu/ri/tech-hub/platform/esd/ebrains-spack-builds/-/raw/master/spack.yaml?ref_type=heads&inline=false' | sed -rn 's/^\s.*nest@([0-9]\.[0-9]).*/\1/p)" >> $GITHUB_ENV 
+        run: echo "NEST_VERSION = $(wget -q -O - 'https://gitlab.ebrains.eu/ri/tech-hub/platform/esd/ebrains-spack-builds/-/raw/master/spack.yaml?ref_type=heads&inline=false' | sed -rn 's/^\s.*nest@([0-9]\.[0-9]).*/\1/p')" >> $GITHUB_ENV
 
       - name: Use environment variable
         run: |
