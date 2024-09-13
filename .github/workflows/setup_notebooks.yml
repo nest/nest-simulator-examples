@@ -39,7 +39,7 @@ jobs:
         run: |
           echo "The nest version in experimental is $NEST_VERSION"
 
-      - name: Check out repository code
+      - name: Check out current repo
         uses: actions/checkout@v4
 
       - name: Create new branch
@@ -48,13 +48,43 @@ jobs:
           echo '$NEST_VERSION'
           git push -u origin $NEST_VERSION
 
-      - name: Run file copy action
-        uses: DeWildeDaan/copy-from-repo@main
+      - name: Get rc tag
+        id: version_tag
+        run: |
+          # Create the branch/tag dynamically
+          # For example, NEST_VERSION = "3.8" and we expect "v3.8_rc1"
+          rc_number=1 # Adjust if needed
+          BRANCH_NAME="v${NEST_VERSION}_rc${rc_number}"
+          echo "Branch name is: $BRANCH_NAME"
+          echo "##[set-output name=branch;]$BRANCH_NAME"
+
+      - name: Checkout nest-simualtor repo
+        uses: actions/checkout@v4
         with:
-          source_repo: "jessica-mitchell/nest-simulator"
-          source_path: "pynest/examples"
-          destination_path: "footest"
-          commit_message: "Test copy commit"
-          create_pr: false
-          source_repo_token: ${{ secrets.API_TOKEN_GITHUB }}
-          destination_repo_token: ${{ secrets.API_TOKEN_GITHUB }}
+          repository: jessica-mitchell/nest-simulator
+          ref: ${{ steps.version_tag.outputs.branch }}  # Use the dynamically created branch
+          token: ${{ secrets.API_TOKEN_GITHUB }}
+          path: nest-simulator # Directory to place the repository in
+
+      - name: Copy Python example files to current repo
+        run: |
+          mkdir temp_examples
+          cp -r nest-simulator/pynest/examples/*.py temp_examples/pynest/examples/
+
+      - name: "Install Python dependencies"
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install ipykernel jupytext
+      - name: "Convert to notebooks and set kernel"
+        run: |
+          jupytext --to notebook  $(find temp_examples -iname "*.py")
+          python -m ipykernel install --user --name "$NAME" --display-name "$DISPLAY_NAME"
+          jupytext --set-kernel "$NAME"  $(find temp_examples -iname "*.ipynb")
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add temp_examples/pynest/examples/
+          git commit -m "Add Python files from nest v${NEST_VERSION}_rc${rc_number}"
+          git push origin HEAD
