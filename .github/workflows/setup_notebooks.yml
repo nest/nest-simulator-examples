@@ -41,20 +41,23 @@ jobs:
 
       - name: Get NEST version
         run: echo "NEST_VERSION=$(wget -q -O - 'https://gitlab.ebrains.eu/ri/tech-hub/platform/esd/ebrains-spack-builds/-/raw/master/spack.yaml?ref_type=heads&inline=false' | sed -rn 's/^\s.*nest@([0-9]\.[0-9]).*/\1/p')" >> $GITHUB_ENV
-        #run: |
-          #  wget -q -O spack.txt 'https://gitlab.ebrains.eu/ri/tech-hub/platform/esd/ebrains-spack-builds/-/raw/master/spack.yaml?ref_type=heads&inline=false'
-          #  sed -rn 's/^\s.*nest@([0-9]\.[0-9]).*/\1/p' spack.txt >> nestvers.txt
-          #  cat nestvers.txt
-          #  echo "NEST_VERSION=$(3.8" >> $GITHUB_ENV
-          #  echo "NEST_VERSION IS $NEST_VERSION"
 
-
-      - name: Use environment variable
+      - name: Test environment variable
         run: |
-          echo "The value of MY_ENV_VAR is $NEST_VERSION"
+          echo "The nest version in experimental is $NEST_VERSION"
 
       - name: Check out repository code
         uses: actions/checkout@v4
+        run: |
+          git checkout -b 'nest$NEST_VERSION'
 
-      - name: Run a one-line script
-        run: echo Hello, NEST!
+      - name: Run file copy action
+        uses:
+        with:
+          source_repo: "jessica-mitchell/nest-simulator"
+          source_path: "pynest/examples"
+          destination_path: "footest"
+          commit_message: "Test copy commit"
+          create_pr: false
+          source_repo_token: ${{ secrets.API_TOKEN_GITHUB }}
+          destination_repo_token: ${{ secrets.API_TOKEN_GITHUB }}
