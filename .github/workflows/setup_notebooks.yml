@@ -70,7 +70,7 @@ jobs:
       - name: Copy Python example files to current repo
         run: |
           mkdir temp_examples
-          cp -r nest-simulator/pynest/examples/*.py temp_examples/pynest/examples/
+          cp -r nest-simulator/pynest/examples/*.py temp_examples/
 
       - name: "Install Python dependencies"
         run: |
