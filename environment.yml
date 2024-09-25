@@ -1,0 +1,17 @@
+name: nest-simulator-binder-environment
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - matplotlib
+  - nest-simulator
+  - nestml
+  - numpy
+  - pandas
+  - pip
+  - python >= 3.10
+  - pip:
+    - elephant
+    - viziphant
+    - neo
+    - PyNN
