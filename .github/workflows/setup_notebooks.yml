@@ -1,0 +1,91 @@
+#
+# get nest version from experimental ebrains
+#
+# env:
+#   NEST_VERSION: $nest_version
+#   EBRAINS_VERSION: "experimental"
+#   EBRAINS_DISPLAY_NAME: "Experimental"
+#
+#
+#checkout new branch this repo with nest version
+#
+#checkout nest-simulator
+#
+#copy files to new branch
+#
+#convert to notebooks
+#
+#name: Target Workflow
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [Integration-with-Automation]
+
+run-name: ${{ github.actor }} is testing out GitHub Actions  🚀
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      NAME: ebrains-experimental
+      DISPLAY_NAME: "EBRAINS-experimental"
+    steps:
+      - name: Get NEST version
+        run: echo "NEST_VERSION=$(wget -q -O - 'https://gitlab.ebrains.eu/ri/tech-hub/platform/esd/ebrains-spack-builds/-/raw/master/spack.yaml?ref_type=heads&inline=false' | sed -rn 's/^\s.*nest@([0-9]\.[0-9]).*/\1/p')" >> $GITHUB_ENV
+
+      - name: Test environment variable
+        run: |
+          echo "The nest version in experimental is $NEST_VERSION"
+
+      - name: Check out current repo
+        uses: actions/checkout@v4
+
+      - name: Create new branch
+        run: |
+          git checkout -b $NEST_VERSION
+          echo '$NEST_VERSION'
+          git push -u origin $NEST_VERSION
+
+      - name: Get rc tag
+        id: version_tag
+        run: |
+          # Create the branch/tag dynamically
+          # For example, NEST_VERSION = "3.8" and we expect "v3.8_rc1"
+          rc_number=1 # Adjust if needed
+          BRANCH_NAME="v${NEST_VERSION}_rc${rc_number}"
+          echo "Branch name is: $BRANCH_NAME"
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Checkout nest-simualtor repo
+        uses: actions/checkout@v4
+        with:
+          repository: jessica-mitchell/nest-simulator
+          ref: refs/heads/jupytext
+          #ref: ${{ steps.version_tag.outputs.branch }}  # Use the dynamically created branch
+          token: ${{ secrets.API_TOKEN_GITHUB }}
+          path: nest-simulator # Directory to place the repository in
+
+      - name: Copy Python example files to current repo
+        run: |
+          mkdir temp_examples
+          cp -r nest-simulator/pynest/examples/*.py temp_examples/
+
+      - name: "Install Python dependencies"
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install ipykernel jupytext
+      - name: "Convert to notebooks and set kernel"
+        run: |
+          jupytext --to notebook  $(find temp_examples -iname "*.py")
+          python -m ipykernel install --user --name "$NAME" --display-name "$DISPLAY_NAME"
+          jupytext --set-kernel "$NAME"  $(find temp_examples -iname "*.ipynb")
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add temp_examples/
+          git commit -m "Add Python files from nest v${NEST_VERSION}_rc${rc_number}"
+          git push origin HEAD
