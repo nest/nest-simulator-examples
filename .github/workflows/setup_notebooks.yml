@@ -1,21 +1,4 @@
-#
-# get nest version from experimental ebrains
-#
-# env:
-#   NEST_VERSION: $nest_version
-#   EBRAINS_VERSION: "experimental"
-#   EBRAINS_DISPLAY_NAME: "Experimental"
-#
-#
-#checkout new branch this repo with nest version
-#
-#checkout nest-simulator
-#
-#copy files to new branch
-#
-#convert to notebooks
-#
-#name: Target Workflow
+name: Target Workflow
 
 on:
   workflow_dispatch:
@@ -44,8 +27,7 @@ jobs:
 
       - name: Create new branch
         run: |
-          git checkout -b $NEST_VERSION
-          echo '$NEST_VERSION'
+          git checkout -B $NEST_VERSION
           git push -u origin $NEST_VERSION
 
       - name: Get rc tag
@@ -58,19 +40,25 @@ jobs:
           echo "Branch name is: $BRANCH_NAME"
           echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
-      - name: Checkout nest-simualtor repo
+      - name: Checkout nest-simulator repo
         uses: actions/checkout@v4
         with:
           repository: jessica-mitchell/nest-simulator
-          ref: refs/heads/jupytext
-          #ref: ${{ steps.version_tag.outputs.branch }}  # Use the dynamically created branch
+          # for testing use known branch
+          # ref: refs/heads/jupytext
+          ref: ${{ steps.version_tag.outputs.branch }}  # Use the dynamically created branch
           token: ${{ secrets.API_TOKEN_GITHUB }}
           path: nest-simulator # Directory to place the repository in
 
       - name: Copy Python example files to current repo
         run: |
+          # TODO ensure all necessary files are copied (consider non python files?)
+          # for testing make temp directory
           mkdir temp_examples
-          cp -r nest-simulator/pynest/examples/*.py temp_examples/
+          # cp -r nest-simulator/pynest/examples/*.py temp_examples/
+          rsync -aP --exclude '**.png' --exclude '**.gif' nest-simulator/pynest/examples temp_examples
+          # find nest-simulator/pynest/examples/ -iname "*.py" -exec cp --parents \{\} ./temp_examples \;
+
 
       - name: "Install Python dependencies"
         run: |
