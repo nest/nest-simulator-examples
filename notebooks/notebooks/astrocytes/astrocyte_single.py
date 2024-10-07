@@ -68,10 +68,10 @@ import nest
 # simulation time
 sim_time = 60000
 # astrocyte parameters
-params_astro = {"delta_IP3": 0.2}
+params_astro = {"IP3_0": 0.16}
 # Poisson input for the astrocyte
 poisson_rate = 1.0
-poisson_weight = 1.0
+poisson_weight = 0.1
 
 ###############################################################################
 # Create astrocyte and devices and connect them.
