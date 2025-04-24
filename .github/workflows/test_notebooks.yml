@@ -10,20 +10,19 @@ run-name: ${{ github.actor }} is trying all the things
 jobs:
   trigger:
     runs-on: ubuntu-latest
+    env:
+      NAME: ebrains-experimental
+      DISPLAY_NAME: "EBRAINS-experimental"
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Set up environment variables
         run: echo "Setting up environment variables"
-        env:
-          NAME: ebrains-experimental
-          DISPLAY_NAME: "EBRAINS-experimental"
-          NEST_VERSION: ${{ github.event.client_payload.tag }}
       - name: Create new branch
         run: |
-          git checkout -B $NEST_VERSION
-          git push -u origin $NEST_VERSION
+          git checkout -B ${{ github.event.client_payload.tag }}
+          git push -u origin ${{ github.event.client_payload.tag }}
 
       - name: Checkout nest-simulator repo
         uses: actions/checkout@v4
