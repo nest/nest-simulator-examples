@@ -1,0 +1,15 @@
+name: testing pre-release workflow trigger
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [test-trigger]
+
+run-name: ${{ github.actor }} is trying all the things
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+  steps:
+    -name: Get NEST tag
+     run: echo "${{ github.event.client_payload.tag }}"

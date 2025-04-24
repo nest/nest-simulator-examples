@@ -1,11 +1,11 @@
-name: Target Workflow
+name: Deploy notebooks from pre-release
 
 on:
   workflow_dispatch:
   repository_dispatch:
     types: [Integration-with-Automation]
 
-run-name: ${{ github.actor }} is testing out GitHub Actions  🚀
+run-name: ${{ github.actor }} is converting Python examples into notebooks using GitHub Actions  🚀
 
 jobs:
   build:
