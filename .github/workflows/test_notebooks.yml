@@ -11,7 +11,31 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: get NEST tag
-        run: echo ${{ github.event.client_payload.tag }}
+      - uses: actions/checkout@v4
+      - env:
+          NAME: ebrains-experimental
+          DISPLAY_NAME: "EBRAINS-experimental"
+          NEST_VERSION: ${{ github.event.client_payload.tag }}
+      - name: Create new branch
+        run: |
+          git checkout -B $NEST_VERSION
+          git push -u origin $NEST_VERSION
+
+      - name: Checkout nest-simulator repo
+        uses: actions/checkout@v4
+        with:
+          repository: jessica-mitchell/dummy_repo
+          # for testing use known branch
+          # ref: refs/heads/jupytext
+          ref: $NEST_VERSION  # Use the dynamically created branch
+          token: ${{ secrets.API_TOKEN_GITHUB }}
+          path: dummy_repo # Directory to place the repository in
+
+      - name: Copy Python example files to current repo
+        run: |
+          # TODO ensure all necessary files are copied (consider non python files?)
+          # for testing make temp directory
+          mkdir temp_examples
+          rsync -aP --exclude '**.png' --exclude '**.gif' dummy_repo/pynest/examples temp_examples
+          # find nest-simulator/pynest/examples/ -iname "*.py" -exec cp --parents \{\} ./temp_examples \;
 
