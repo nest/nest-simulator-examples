@@ -10,6 +10,6 @@ run-name: ${{ github.actor }} is trying all the things
 jobs:
   trigger:
     runs-on: ubuntu-latest
-  steps:
-    - name: Get NEST tag
-      run: echo ${{ github.event.client_payload.tag }}
+    steps:
+      - name: Get NEST tag
+        run: echo ${{ github.event.client_payload.tag }}
