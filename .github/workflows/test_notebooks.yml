@@ -11,9 +11,12 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout repo
+      - name: Checkout repo
         uses: actions/checkout@v4
-      - env:
+
+      - name: Set up environment variables
+        run: echo "Setting up environment variables"
+        env:
           NAME: ebrains-experimental
           DISPLAY_NAME: "EBRAINS-experimental"
           NEST_VERSION: ${{ github.event.client_payload.tag }}
