@@ -11,5 +11,5 @@ jobs:
   build:
     runs-on: ubuntu-latest
   steps:
-    -name: Get NEST tag
-     run: echo "${{ github.event.client_payload.tag }}"
+    - name: Get NEST tag
+      run: echo "${{ github.event.client_payload.tag }}"
