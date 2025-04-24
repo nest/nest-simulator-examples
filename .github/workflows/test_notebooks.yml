@@ -10,8 +10,8 @@ run-name: ${{ github.actor }} is trying all the things
 jobs:
   trigger:
     runs-on: ubuntu-latest
-  steps:
-    - env:
-       TAG: ${{ github.event.client_payload.tag }}
-      run: echo $TAG
+    steps:
+      - env:
+         TAG: ${{ github.event.client_payload.tag }}
+        run: echo $TAG
 
