@@ -11,5 +11,6 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
   steps:
-    - name: Get NEST tag
-      run: echo ${{ github.event.client_payload.tag }}
+    - env:
+       TAG: ${{ github.event.client_payload.tag }}
+      run: echo $TAG
