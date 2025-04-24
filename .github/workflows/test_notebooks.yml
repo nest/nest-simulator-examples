@@ -30,7 +30,7 @@ jobs:
           repository: jessica-mitchell/dummy_repo
           # for testing use known branch
           # ref: refs/heads/jupytext
-          ref: $NEST_VERSION  # Use the dynamically created branch
+          ref: ${{ github.event.client_payload.tag }}  # Use the dynamically created branch
           token: ${{ secrets.API_TOKEN_GITHUB }}
           path: dummy_repo # Directory to place the repository in
 
