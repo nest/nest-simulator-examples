@@ -46,27 +46,27 @@ jobs:
           python -m pip install --upgrade pip setuptools
           python -m pip install ipykernel jupytext yq
 
-      - name: "Convert to notebooks and set kernel"
+      - name: "list files"
         run: |
           cd temp_examples
           ls
+      - name: "Convert to notebooks and set kernel"
           # Use yq to extract Python files and execute jupytext
           { yq -r '.directories[].convert2notebooks[]?' '../pynest_examples_metadata.yaml'
           } > convert.txt
           #> convert.txt
           while read line; do echo "$line" ; done <convert.txt
           # jupytext --to notebook "$file"
-          exit 0
           # Use yq to extract Python files and execute jupytext
           # jupytext --to notebook "$file"
           # jupytext --to notebook  $(find temp_examples -iname "*.py")
-          python -m ipykernel install --user --name "$NAME" --display-name "$DISPLAY_NAME"
-          jupytext --set-kernel "$NAME"  $(find temp_examples -iname "*.ipynb")
+          #    python -m ipykernel install --user --name "$NAME" --display-name "$DISPLAY_NAME"
+          #jupytext --set-kernel "$NAME"  $(find temp_examples -iname "*.ipynb")
 
-      - name: Commit and push changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add temp_examples/
-          git commit -m "Add Python files from nest ${{ github.event.client_payload.tag }}"
-          git push origin HEAD
+          #- name: Commit and push changes
+          #  run: |
+          #    git config --global user.name "github-actions[bot]"
+          #    git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          #    git add temp_examples/
+          #    git commit -m "Add Python files from nest ${{ github.event.client_payload.tag }}"
+          #    git push origin HEAD
