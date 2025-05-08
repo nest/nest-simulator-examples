@@ -18,8 +18,8 @@ jobs:
       - name: use metadata
         run: |
           # Use yq to extract Python files and execute jupytext
-          yq -r '.directories[].conver2notebooks[]?' 'pynest_examples_metadata.yaml' > convert.txt
-          cat convert.txt
+          { yq -r '.directories[].conver2notebooks[]?' 'pynest_examples_metadata.yaml'
+          } > convert.txt
           #> convert.txt
-          #while read line; do echo "$line" ; done <convert.txt
+          while read line; do echo "$line" ; done <convert.txt
           # jupytext --to notebook "$file"
