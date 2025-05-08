@@ -21,7 +21,8 @@ jobs:
         run: echo "Setting up environment variables"
       - name: Create new branch
         run: |
-          git checkout -B ${{ github.event.client_payload.tag }}
+          #git checkout -B ${{ github.event.client_payload.tag }}
+          git checkout -B temp_branch
 
       - name: Checkout nest-simulator repo
         uses: actions/checkout@v4
@@ -29,7 +30,8 @@ jobs:
           repository: jessica-mitchell/nest-simulator
           # for testing use known branch
           # ref: refs/heads/jupytext
-          ref: ${{ github.event.client_payload.tag }}  # Use the dynamically created branch
+          ref: master  # Use the dynamically created branch
+          #ref: ${{ github.event.client_payload.tag }}  # Use the dynamically created branch
           token: ${{ secrets.API_TOKEN_GITHUB }}
           path: nest-simulator # Directory to place the repository in
 
