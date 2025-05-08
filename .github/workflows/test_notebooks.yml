@@ -51,6 +51,7 @@ jobs:
           cd temp_examples
           ls
       - name: "Convert to notebooks and set kernel"
+        run: |
           # Use yq to extract Python files and execute jupytext
           { yq -r '.directories[].convert2notebooks[]?' '../pynest_examples_metadata.yaml'
           } > convert.txt
