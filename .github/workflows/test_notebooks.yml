@@ -48,14 +48,13 @@ jobs:
 
       - name: "list files"
         run: |
-          cd temp_examples
-          ls ../
+          ls temp_examples/examples/
       - name: "Convert to notebooks and set kernel"
         run: |
           # Use yq to extract Python files and execute jupytext
           { yq -r '.directories[].convert2notebooks[]?' '../pynest_examples_metadata.yaml'
-          } > convert.txt
-          #> convert.txt
+          } > temp_examples/examples/convert.txt
+          cd temp_examples/examples/ #> convert.txt
           while read line; do echo "$line" ; done <convert.txt
           # jupytext --to notebook "$file"
           # Use yq to extract Python files and execute jupytext
