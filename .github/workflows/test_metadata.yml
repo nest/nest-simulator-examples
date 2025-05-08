@@ -8,9 +8,9 @@ run-name: ${{ github.actor }} is trying all the things
 jobs:
   trigger:
     runs-on: ubuntu-latest
-  steps:
-    - name: use metadata
-      run: |
+    steps:
+      - name: use metadata
+        run: |
           YAML_FILE="pynest_examples_metadata.yaml"
           # Check if the YAML file exists
           if [ ! -f "$YAML_FILE" ]; then
