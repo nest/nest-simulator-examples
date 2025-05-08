@@ -54,10 +54,10 @@ jobs:
           fi
 
           # Use yq to extract Python files and execute jupytext
-          yq eval '.directories[].conver2notebooks[]' "$YAML_FILE" | while read -r file; do
+          yq -r '.directories[].conver2notebooks[]?' "$YAML_FILE" | while read -r file; do
           echo "Converting $file to notebook..."
           # jupytext --to notebook "$file"
-          # done
+          done
           exit 0
           # jupytext --to notebook  $(find temp_examples -iname "*.py")
           python -m pip install ipykernel jupytext
