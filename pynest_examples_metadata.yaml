@@ -1,38 +1,101 @@
 directories:
+- name: top-level
+  convert2notebooks:
+  - aeif_cond_beta_multisynapse.py
+  - balancedneuron.py
+  - brette_gerstner_fig_2c.py
+  - brette_gerstner_fig_3d.py
+  - BrodyHopfield.py
+  - brunel_alpha_evolution_strategies.py
+  - brunel_alpha_nest.py
+  - brunel_delta_nest.py
+  - brunel_exp_multisynapse_nest.py
+  - brunel_siegert_nest.py
+  - CampbellSiegert.py
+  - clopath_synapse_small_network.py
+  - clopath_synapse_spike_pairing.py
+  - correlospinmatrix_detector_two_neuron.py
+  - cross_check_mip_corrdet.py
+  - csa_example.py
+  - csa_spatial_example.py
+  - evaluate_quantal_stp_synapse.py
+  - evaluate_tsodyks2_synapse.py
+  - gap_junctions_inhibitory_network.py
+  - gap_junctions_two_neurons.py
+  - gif_cond_exp_multisynapse.py
+  - gif_pop_psc_exp.py
+  - gif_population.py
+  - glif_cond_neuron.py
+  - glif_psc_double_alpha_neuron.py
+  - glif_psc_neuron.py
+  - hh_phaseplane.py
+  - hh_psc_alpha.py
+  - hpc_benchmark.py
+  - iaf_tum_2000_short_term_depression.py
+  - iaf_tum_2000_short_term_facilitation.py
+  - if_curve.py
+  - intrinsic_currents_spiking.py
+  - intrinsic_currents_subthreshold.py
+  - lin_rate_ipn_network.py
+  - mc_neuron.py
+  - multimeter_file.py
+  - one_neuron.py
+  - one_neuron_with_noise.py
+  - plot_weight_matrices.py
+  - precise_spiking.py
+  - pulsepacket.py
+  - rate_neuron_dm.py
+  - recording_demo.py
+  - repeated_stimulation.py
+  - sensitivity_to_perturbation.py
+  - sinusoidal_gamma_generator.py
+  - sinusoidal_poisson_generator.py
+  - store_restore_network.py
+  - structural_plasticity.py
+  - synapsecollection.py
+  - testiaf.py
+  - tsodyks_depressing.py
+  - tsodyks_facilitating.py
+  - twoneurons.py
+  - urbanczik_synapse_example.py
+  - vinit_example.py
+  - wang_decision_making.py
 - name: sudoku
   other_files:
-  - README.rst
+  - sudoku/README.rst
   path: examples/sudoku
-  python_files:
-  - sudoku_net.py
-  - helpers_sudoku.py
-  - sudoku_solver.py
-  - plot_progress.py
   convert2notebooks:
-  - sudoku_solver.py
-  - plot_progress.py
+  - sudoku/sudoku_solver.py
+  - sudoku/plot_progress.py
+  python_files:
+  - sudoku/sudoku_net.py
+  - sudoku/helpers_sudoku.py
+  - sudoku/sudoku_solver.py
+  - sudoku/plot_progress.py
 - name: output
   other_files:
-  - sudoku_solution.gif
-  - sudoku_noise_comparison.gif
-  - sudoku_solution.png
+  - sudoku/output/sudoku_solution.gif
+  - sudoku/output/sudoku_noise_comparison.gif
+  - sudoku/output/sudoku_solution.png
   path: examples/sudoku/output
   python_files: []
 - name: sonata_example
   other_files:
-  - README.rst
+  - sonata_example/README.rst
   path: examples/sonata_example
+  convert2notebooks:
+  - sonata_example/sonata_network.py
   python_files:
-  - sonata_network.py
+  - sonata_example/sonata_network.py
 - name: 300_pointneurons
   other_files:
-  - circuit_config.json
-  - simulation_config.json
+  - sonata_example/300_pointneurons/circuit_config.json
+  - sonata_example/300_pointneurons/simulation_config.json
   path: examples/sonata_example/300_pointneurons
   python_files: []
 - name: inputs
   other_files:
-  - external_spike_trains.h5
+  - sonata_example/300_pointneurons/inputs/external_spike_trains.h5
   path: examples/sonata_example/300_pointneurons/inputs
   python_files: []
 - name: components
@@ -41,198 +104,196 @@ directories:
   python_files: []
 - name: cell_models
   other_files:
-  - 473863510_point.json
-  - 472363762_point.json
-  - 473862421_point.json
-  - 472912177_point.json
-  - 473863035_point.json
+  - sonata_example/300_pointneurons/components/cell_models/473863510_point.json
+  - sonata_example/300_pointneurons/components/cell_models/472363762_point.json
+  - sonata_example/300_pointneurons/components/cell_models/473862421_point.json
+  - sonata_example/300_pointneurons/components/cell_models/472912177_point.json
+  - sonata_example/300_pointneurons/components/cell_models/473863035_point.json
   path: examples/sonata_example/300_pointneurons/components/cell_models
   python_files: []
 - name: synaptic_models
   other_files:
-  - ExcToInh.json
-  - InhToExc.json
-  - ExcToExc.json
-  - InhToInh.json
+  - sonata_example/300_pointneurons/components/synaptic_models/ExcToInh.json
+  - sonata_example/300_pointneurons/components/synaptic_models/InhToExc.json
+  - sonata_example/300_pointneurons/components/synaptic_models/ExcToExc.json
+  - sonata_example/300_pointneurons/components/synaptic_models/InhToInh.json
   path: examples/sonata_example/300_pointneurons/components/synaptic_models
   python_files: []
 - name: network
   other_files:
-  - external_node_types.csv
-  - internal_internal_edge_types.csv
-  - external_internal_edge_types.csv
-  - internal_node_types.csv
-  - external_nodes.h5
-  - internal_internal_edges.h5
-  - external_internal_edges.h5
-  - internal_nodes.h5
+  - sonata_example/300_pointneurons/network/external_node_types.csv
+  - sonata_example/300_pointneurons/network/internal_internal_edge_types.csv
+  - sonata_example/300_pointneurons/network/external_internal_edge_types.csv
+  - sonata_example/300_pointneurons/network/internal_node_types.csv
+  - sonata_example/300_pointneurons/network/external_nodes.h5
+  - sonata_example/300_pointneurons/network/internal_internal_edges.h5
+  - sonata_example/300_pointneurons/network/external_internal_edges.h5
+  - sonata_example/300_pointneurons/network/internal_nodes.h5
   path: examples/sonata_example/300_pointneurons/network
   python_files: []
 - name: spatial
   other_files:
-  - README.rst
+  - spatial/README.rst
   path: examples/spatial
-  python_files:
-  - conncon_sources.py
-  - connex_ew.py
-  - test_3d.py
-  - grid_iaf.py
-  - conncomp.py
-  - conncon_targets.py
-  - test_3d_exp.py
-  - connex.py
-  - gaussex.py
-  - ctx_2n.py
-  - nodes_source_target.py
-  - grid_iaf_oc.py
-  - grid_iaf_irr.py
-  - test_3d_gauss.py
   convert2notebooks:
-  - conncon_sources.py
-  - connex_ew.py
-  - test_3d.py
-  - grid_iaf.py
-  - conncomp.py
-  - conncon_targets.py
-  - test_3d_exp.py
-  - connex.py
-  - gaussex.py
-  - ctx_2n.py
-  - nodes_source_target.py
-  - grid_iaf_oc.py
-  - grid_iaf_irr.py
-  - test_3d_gauss.py
+  - spatial/conncon_sources.py
+  - spatial/connex_ew.py
+  - spatial/test_3d.py
+  - spatial/grid_iaf.py
+  - spatial/conncomp.py
+  - spatial/conncon_targets.py
+  - spatial/test_3d_exp.py
+  - spatial/connex.py
+  - spatial/gaussex.py
+  - spatial/ctx_2n.py
+  - spatial/nodes_source_target.py
+  - spatial/grid_iaf_oc.py
+  - spatial/grid_iaf_irr.py
+  - spatial/test_3d_gauss.py
+  python_files:
+  - spatial/conncon_sources.py
+  - spatial/connex_ew.py
+  - spatial/test_3d.py
+  - spatial/grid_iaf.py
+  - spatial/conncomp.py
+  - spatial/conncon_targets.py
+  - spatial/test_3d_exp.py
+  - spatial/connex.py
+  - spatial/gaussex.py
+  - spatial/ctx_2n.py
+  - spatial/nodes_source_target.py
+  - spatial/grid_iaf_oc.py
+  - spatial/grid_iaf_irr.py
+  - spatial/test_3d_gauss.py
 - name: pong
   other_files:
-  - README.rst
+  - pong/README.rst
   path: examples/pong
-  python_files:
-  - run_simulations.py
-  - pong.py
-  - generate_gif.py
-  - networks.py
   convert2notebooks:
-  - run_simulations.py
-  - generate_gif.py
+  - pong/run_simulations.py
+  - pong/generate_gif.py
+  python_files:
+  - pong/run_simulations.py
+  - pong/pong.py
+  - pong/generate_gif.py
+  - pong/networks.py
 - name: eprop_plasticity
   other_files:
-  - eprop_supervised_regression_handwriting_bsshslm_2020.png
-  - eprop_supervised_regression_lemniscate_bsshslm_2020.png
-  - eprop_supervised_regression_sine-waves_bsshslm_2020.png
-  - NMNIST_pixels_blocklist.txt
-  - chaos_handwriting.txt
-  - README.rst
-  - eprop_supervised_classification_neuromorphic_mnist.png
-  - eprop_supervised_regression_sine-waves.png
-  - eprop_supervised_classification_evidence-accumulation_bsshslm_2020.png
+  - eprop_plasticity/eprop_supervised_regression_handwriting_bsshslm_2020.png
+  - eprop_plasticity/eprop_supervised_regression_lemniscate_bsshslm_2020.png
+  - eprop_plasticity/eprop_supervised_regression_sine-waves_bsshslm_2020.png
+  - eprop_plasticity/NMNIST_pixels_blocklist.txt
+  - eprop_plasticity/chaos_handwriting.txt
+  - eprop_plasticity/README.rst
+  - eprop_plasticity/eprop_supervised_classification_neuromorphic_mnist.png
+  - eprop_plasticity/eprop_supervised_regression_sine-waves.png
+  - eprop_plasticity/eprop_supervised_classification_evidence-accumulation_bsshslm_2020.png
   path: examples/eprop_plasticity
-  python_files:
-  - eprop_supervised_classification_neuromorphic_mnist.py
-  - eprop_supervised_classification_evidence-accumulation_bsshslm_2020.py
-  - eprop_supervised_regression_sine-waves.py
-  - eprop_supervised_regression_lemniscate_bsshslm_2020.py
-  - eprop_supervised_regression_sine-waves_bsshslm_2020.py
-  - eprop_supervised_regression_handwriting_bsshslm_2020.py
   convert2notebooks:
-  - eprop_supervised_classification_neuromorphic_mnist.py
-  - eprop_supervised_classification_evidence-accumulation_bsshslm_2020.py
-  - eprop_supervised_regression_sine-waves.py
-  - eprop_supervised_regression_lemniscate_bsshslm_2020.py
-  - eprop_supervised_regression_sine-waves_bsshslm_2020.py
-  - eprop_supervised_regression_handwriting_bsshslm_2020.py
+  - eprop_plasticity/eprop_supervised_classification_neuromorphic_mnist.py
+  - eprop_plasticity/eprop_supervised_classification_evidence-accumulation_bsshslm_2020.py
+  - eprop_plasticity/eprop_supervised_regression_sine-waves.py
+  - eprop_plasticity/eprop_supervised_regression_lemniscate_bsshslm_2020.py
+  - eprop_plasticity/eprop_supervised_regression_sine-waves_bsshslm_2020.py
+  - eprop_plasticity/eprop_supervised_regression_handwriting_bsshslm_2020.py
+  python_files:
+  - eprop_plasticity/eprop_supervised_classification_neuromorphic_mnist.py
+  - eprop_plasticity/eprop_supervised_classification_evidence-accumulation_bsshslm_2020.py
+  - eprop_plasticity/eprop_supervised_regression_sine-waves.py
+  - eprop_plasticity/eprop_supervised_regression_lemniscate_bsshslm_2020.py
+  - eprop_plasticity/eprop_supervised_regression_sine-waves_bsshslm_2020.py
+  - eprop_plasticity/eprop_supervised_regression_handwriting_bsshslm_2020.py
 - name: example_logs
   other_files: []
   path: examples/example_logs
   python_files: []
 - name: music_cont_out_proxy_example
   other_files:
-  - README.md
-  - test.music
-  - README.rst
+  - music_cont_out_proxy_example/README.md
+  - music_cont_out_proxy_example/test.music
+  - music_cont_out_proxy_example/README.rst
   path: examples/music_cont_out_proxy_example
-  python_files:
-  - nest_script.py
-  - receiver_script.py
   convert2notebooks:
-  - nest_script.py
-  - receiver_script.py
+  - music_cont_out_proxy_example/nest_script.py
+  - music_cont_out_proxy_example/receiver_script.py
+  python_files:
+  - music_cont_out_proxy_example/nest_script.py
+  - music_cont_out_proxy_example/receiver_script.py
 - name: compartmental_model
   other_files:
-  - README.rst
+  - compartmental_model/README.rst
   path: examples/compartmental_model
-  python_files:
-  - two_comps.py
-  - receptors_and_current.py
   convert2notebooks:
-  - two_comps.py
-  - receptors_and_current.py
+  - compartmental_model/two_comps.py
+  - compartmental_model/receptors_and_current.py
+  python_files:
+  - compartmental_model/two_comps.py
+  - compartmental_model/receptors_and_current.py
 - name: Potjans_2014
   other_files:
-  - potjans_2014_raster_plot.png
-  - potjans_2014_microcircuit.png
-  - potjans_2014_box_plot.png
-  - README.rst
+  - Potjans_2014/potjans_2014_raster_plot.png
+  - Potjans_2014/potjans_2014_microcircuit.png
+  - Potjans_2014/potjans_2014_box_plot.png
+  - Potjans_2014/README.rst
   path: examples/Potjans_2014
   convert2notebooks:
-  - run_microcircuit.py
+  - Potjans_2014/run_microcircuit.py
   python_files:
-  - helpers.py
-  - sim_params.py
-  - run_microcircuit.py
-  - network.py
-  - stimulus_params.py
-  - network_params.py
+  - Potjans_2014/helpers.py
+  - Potjans_2014/sim_params.py
+  - Potjans_2014/run_microcircuit.py
+  - Potjans_2014/network.py
+  - Potjans_2014/stimulus_params.py
+  - Potjans_2014/network_params.py
 - name: reference_data
   other_files:
-  - spike_recorder-7720-0.dat
-  - spike_recorder-7719-0.dat
-  - spike_recorder-7725-0.dat
-  - rate5.dat
-  - spike_recorder-7724-0.dat
-  - population_nodeids.dat
-  - rate0.dat
-  - rate1.dat
-  - rate4.dat
-  - rate3.dat
-  - rate7.dat
-  - spike_recorder-7721-0.dat
-  - spike_recorder-7722-0.dat
-  - spike_recorder-7723-0.dat
-  - rate6.dat
-  - rate2.dat
-  - spike_recorder-7718-0.dat
+  - Potjans_2014/reference_data/spike_recorder-7720-0.dat
+  - Potjans_2014/reference_data/spike_recorder-7719-0.dat
+  - Potjans_2014/reference_data/spike_recorder-7725-0.dat
+  - Potjans_2014/reference_data/rate5.dat
+  - Potjans_2014/reference_data/spike_recorder-7724-0.dat
+  - Potjans_2014/reference_data/population_nodeids.dat
+  - Potjans_2014/reference_data/rate0.dat
+  - Potjans_2014/reference_data/rate1.dat
+  - Potjans_2014/reference_data/rate4.dat
+  - Potjans_2014/reference_data/rate3.dat
+  - Potjans_2014/reference_data/rate7.dat
+  - Potjans_2014/reference_data/spike_recorder-7721-0.dat
+  - Potjans_2014/reference_data/spike_recorder-7722-0.dat
+  - Potjans_2014/reference_data/spike_recorder-7723-0.dat
+  - Potjans_2014/reference_data/rate6.dat
+  - Potjans_2014/reference_data/rate2.dat
+  - Potjans_2014/reference_data/spike_recorder-7718-0.dat
   path: examples/Potjans_2014/reference_data
   python_files: []
 - name: EI_clustered_network
   other_files:
-  - EI_clustered_network_schematic.png
-  - README.rst
+  - EI_clustered_network/EI_clustered_network_schematic.png
+  - EI_clustered_network/README.rst
   path: examples/EI_clustered_network
   convert2notebooks:
-  - run_simulation.py
+  - EI_clustered_network/run_simulation.py
   python_files:
-  - sim_params.py
-  - run_simulation.py
-  - helper.py
-  - network.py
-  - stimulus_params.py
-  - network_params.py
+  - EI_clustered_network/sim_params.py
+  - EI_clustered_network/run_simulation.py
+  - EI_clustered_network/helper.py
+  - EI_clustered_network/network.py
+  - EI_clustered_network/stimulus_params.py
+  - EI_clustered_network/network_params.py
 - name: astrocytes
   other_files:
-  - README.rst
+  - astrocytes/README.rst
   path: examples/astrocytes
-  python_files:
-  - astrocyte_brunel_bernoulli.py
-  - astrocyte_brunel_fixed_indegree.py
-  - astrocyte_interaction.py
-  - astrocyte_single.py
-  - astrocyte_small_network.py
   convert2notebooks:
-  - astrocyte_brunel_bernoulli.py
-  - astrocyte_brunel_fixed_indegree.py
-  - astrocyte_interaction.py
-  - astrocyte_single.py
-  - astrocyte_small_network.py
-project:
-  author: nest_contributors
-  name: 'PyNEST example metadata'
+  - astrocytes/astrocyte_brunel_bernoulli.py
+  - astrocytes/astrocyte_brunel_fixed_indegree.py
+  - astrocytes/astrocyte_interaction.py
+  - astrocytes/astrocyte_single.py
+  - astrocytes/astrocyte_small_network.py
+  python_files:
+  - astrocytes/astrocyte_brunel_bernoulli.py
+  - astrocytes/astrocyte_brunel_fixed_indegree.py
+  - astrocytes/astrocyte_interaction.py
+  - astrocytes/astrocyte_single.py
+  - astrocytes/astrocyte_small_network.py
+

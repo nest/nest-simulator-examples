@@ -22,45 +22,42 @@ jobs:
       - name: Create new branch
         run: |
           git checkout -B ${{ github.event.client_payload.tag }}
-          git push -u origin ${{ github.event.client_payload.tag }}
 
       - name: Checkout nest-simulator repo
         uses: actions/checkout@v4
         with:
-          repository: jessica-mitchell/dummy_repo
+          repository: jessica-mitchell/nest-simulator
           # for testing use known branch
           # ref: refs/heads/jupytext
           ref: ${{ github.event.client_payload.tag }}  # Use the dynamically created branch
           token: ${{ secrets.API_TOKEN_GITHUB }}
-          path: dummy_repo # Directory to place the repository in
+          path: nest-simulator # Directory to place the repository in
 
       - name: Copy Python example files to current repo
         run: |
           # for testing make temp directory
           mkdir temp_examples
-          rsync -aP --exclude '**.png' --exclude '**.gif' dummy_repo/pynest/examples temp_examples
+          rsync -aP --exclude '**.png' --exclude '**.gif' nest-simulator/pynest/examples temp_examples
 
       - name: "Install Python dependencies"
         run: |
           python -m pip install --upgrade pip setuptools
           python -m pip install ipykernel jupytext yq
+
       - name: "Convert to notebooks and set kernel"
         run: |
-          YAML_FILE="pynest_examples_metadata.yaml"
-          # Check if the YAML file exists
-          if [ ! -f "$YAML_FILE" ]; then
-            echo "YAML file not found: $YAML_FILE"
-          exit 1
-          fi
-
+          cd temp_examples
+          ls
           # Use yq to extract Python files and execute jupytext
-          yq -r '.directories[].conver2notebooks[]?' "$YAML_FILE" | while read -r file; do
-          echo "Converting $file to notebook..."
+          { yq -r '.directories[].convert2notebooks[]?' 'pynest_examples_metadata.yaml'
+          } > convert.txt
+          #> convert.txt
+          while read line; do echo "$line" ; done <convert.txt
           # jupytext --to notebook "$file"
-          done
           exit 0
+          # Use yq to extract Python files and execute jupytext
+          # jupytext --to notebook "$file"
           # jupytext --to notebook  $(find temp_examples -iname "*.py")
-          python -m pip install ipykernel jupytext
           python -m ipykernel install --user --name "$NAME" --display-name "$DISPLAY_NAME"
           jupytext --set-kernel "$NAME"  $(find temp_examples -iname "*.ipynb")
 
