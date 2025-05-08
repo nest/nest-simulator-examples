@@ -52,7 +52,7 @@ jobs:
       - name: "Convert to notebooks and set kernel"
         run: |
           # Use yq to extract Python files and execute jupytext
-          { yq -r '.directories[].convert2notebooks[]?' '../pynest_examples_metadata.yaml'
+          { yq -r '.directories[].convert2notebooks[]?' 'pynest_examples_metadata.yaml'
           } > temp_examples/examples/convert.txt
           cd temp_examples/examples/ #> convert.txt
           while read line; do echo "$line" ; done <convert.txt
