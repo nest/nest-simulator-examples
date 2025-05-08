@@ -49,7 +49,7 @@ jobs:
       - name: "list files"
         run: |
           cd temp_examples
-          ls
+        ls ../
       - name: "Convert to notebooks and set kernel"
         run: |
           # Use yq to extract Python files and execute jupytext
