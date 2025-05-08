@@ -36,11 +36,9 @@ jobs:
 
       - name: Copy Python example files to current repo
         run: |
-          # TODO ensure all necessary files are copied (consider non python files?)
           # for testing make temp directory
           mkdir temp_examples
           rsync -aP --exclude '**.png' --exclude '**.gif' dummy_repo/pynest/examples temp_examples
-          # find nest-simulator/pynest/examples/ -iname "*.py" -exec cp --parents \{\} ./temp_examples \;
 
       - name: "Install Python dependencies"
         run: |
@@ -62,6 +60,7 @@ jobs:
           # done
           exit 0
           # jupytext --to notebook  $(find temp_examples -iname "*.py")
+          python -m pip install ipykernel jupytext
           python -m ipykernel install --user --name "$NAME" --display-name "$DISPLAY_NAME"
           jupytext --set-kernel "$NAME"  $(find temp_examples -iname "*.ipynb")
 
@@ -70,5 +69,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add temp_examples/
-          git commit -m "Add Python files from nest v${NEST_VERSION}_rc${rc_number}"
+          git commit -m "Add Python files from nest ${{ github.event.client_payload.tag }}"
           git push origin HEAD
