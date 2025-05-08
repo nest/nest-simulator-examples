@@ -11,16 +11,13 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+      - name: "Install Python dependencies"
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install ipykernel jupytext yq
       - name: use metadata
         run: |
-          YAML_FILE="pynest_examples_metadata.yaml"
-          # Check if the YAML file exists
-          if [ ! -f "$YAML_FILE" ]; then
-            echo "YAML file not found: $YAML_FILE"
-          exit 1
-          fi
-
           # Use yq to extract Python files and execute jupytext
-          yq -r '.directories[].conver2notebooks[]?' "$YAML_FILE" > convert.txt
+          yq -r '.directories[].conver2notebooks[]?' 'pynest_examples_metadata.yaml' > convert.txt
           while read line; do echo "$line" ; done <convert.txt
           # jupytext --to notebook "$file"
