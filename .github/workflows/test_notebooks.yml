@@ -48,6 +48,7 @@ jobs:
       - name: "Convert to notebooks"
         run: |
           # Use yq to extract Python files and execute jupytext
+          python -m ipykernel install --user --name "$KERNEL_NAME" --display-name "$DISPLAY_NAME"
           { yq -r '.directories[].convert2notebooks[]?' 'pynest_examples_metadata.yaml'
           } > temp_examples/examples/convert.txt
           cd temp_examples/examples/ #> convert.txt
@@ -55,9 +56,8 @@ jobs:
           # jupytext --to notebook  $(find temp_examples -iname "*.py")
       - name: "Set kernel"
         run: |
-          # jupytext --set-kernel "$KERNEL_NAME"  $(find . -iname "*.ipynb")
           # find . -name "*.ipynb" -exec sed -i 's/"name": ".*"/"name": "$KERNEL_NAME"/' {} \;
-          python -m ipykernel install --user --name "$KERNEL_NAME" --display-name "$DISPLAY_NAME"
+          jupytext --set-kernel "$KERNEL_NAME"  $(find . -iname "*.ipynb")
           # find . -name "*.ipynb" -exec sed -i 's/"display_name": ".*"/"display_name": "$DISPLAY_NAME"/' {} \;
           #find . -name "*.ipynb" -exec sed -i -e 's/"name": ".*"/"name": "'"$KERNEL_NAME"'"/' -e 's/"display_name": ".*"/"display_name": "'"$DISPLAY_NAME"'"/' {} \;
 
