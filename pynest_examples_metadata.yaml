@@ -54,8 +54,6 @@ directories:
   - structural_plasticity.py
   - synapsecollection.py
   - testiaf.py
-  - tsodyks_depressing.py
-  - tsodyks_facilitating.py
   - twoneurons.py
   - urbanczik_synapse_example.py
   - vinit_example.py
