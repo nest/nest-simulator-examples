@@ -43,7 +43,7 @@ jobs:
       - name: "Install Python dependencies"
         run: |
           python -m pip install --upgrade pip setuptools
-          python -m pip install jupytext yq
+          python -m pip install jupytext yq ipykernel
 
       - name: "Convert to notebooks"
         run: |
@@ -57,8 +57,9 @@ jobs:
         run: |
           # jupytext --set-kernel "$KERNEL_NAME"  $(find . -iname "*.ipynb")
           # find . -name "*.ipynb" -exec sed -i 's/"name": ".*"/"name": "$KERNEL_NAME"/' {} \;
+          python -m ipykernel install --user --name "$KERNEL_NAME" --display-name "$DISPLAY_NAME"
           # find . -name "*.ipynb" -exec sed -i 's/"display_name": ".*"/"display_name": "$DISPLAY_NAME"/' {} \;
-          find . -name "*.ipynb" -exec sed -i -e 's/"name": ".*"/"name": "'"$KERNEL_NAME"'"/' -e 's/"display_name": ".*"/"display_name": "'"$DISPLAY_NAME"'"/' {} \;
+          #find . -name "*.ipynb" -exec sed -i -e 's/"name": ".*"/"name": "'"$KERNEL_NAME"'"/' -e 's/"display_name": ".*"/"display_name": "'"$DISPLAY_NAME"'"/' {} \;
 
       - name: Commit and push changes
         run: |
