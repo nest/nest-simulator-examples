@@ -29,7 +29,6 @@ jobs:
         with:
           repository: jessica-mitchell/nest-simulator
           # for testing use known branch
-          # ref: refs/heads/jupytext
           ref: master  # Use the dynamically created branch
           #ref: ${{ github.event.client_payload.tag }}  # Use the dynamically created branch
           token: ${{ secrets.API_TOKEN_GITHUB }}
@@ -46,9 +45,6 @@ jobs:
           python -m pip install --upgrade pip setuptools
           python -m pip install jupytext yq
 
-      - name: "list files"
-        run: |
-          ls temp_examples/examples/
       - name: "Convert to notebooks and set kernel"
         run: |
           # Use yq to extract Python files and execute jupytext
@@ -57,12 +53,13 @@ jobs:
           cd temp_examples/examples/ #> convert.txt
           while read line; do jupytext --to notebook "$line" ; done <convert.txt
           # jupytext --to notebook  $(find temp_examples -iname "*.py")
-          jupytext --set-kernel "$KERNEL_NAME"  $(find temp_examples -iname "*.ipynb")
-          find temp_examples -name "*.ipynb" -exec sed -i 's/"display_name": ".*"/"display_name": "$DSIPLAY_NAME"/' {} \;
-            #- name: Commit and push changes
-          #  run: |
-          #    git config --global user.name "github-actions[bot]"
-          #    git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          #    git add temp_examples/
-          #    git commit -m "Add Python files from nest ${{ github.event.client_payload.tag }}"
-          #    git push origin HEAD
+          jupytext --set-kernel "$KERNEL_NAME"  $(find . -iname "*.ipynb")
+          find . -name "*.ipynb" -exec sed -i 's/"display_name": ".*"/"display_name": "$DISPLAY_NAME"/' {} \;
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add temp_examples/
+          git commit -m "Add Python files from nest ${{ github.event.client_payload.tag }}"
+          git push origin HEAD
