@@ -11,7 +11,7 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     env:
-      NAME: ebrains-experimental
+      KERNEL_NAME: ebrains-experimental
       DISPLAY_NAME: "EBRAINS-experimental"
     steps:
       - name: Checkout repo
@@ -44,7 +44,7 @@ jobs:
       - name: "Install Python dependencies"
         run: |
           python -m pip install --upgrade pip setuptools
-          python -m pip install ipykernel jupytext yq
+          python -m pip install jupytext yq
 
       - name: "list files"
         run: |
@@ -55,15 +55,11 @@ jobs:
           { yq -r '.directories[].convert2notebooks[]?' 'pynest_examples_metadata.yaml'
           } > temp_examples/examples/convert.txt
           cd temp_examples/examples/ #> convert.txt
-          while read line; do echo "$line" ; done <convert.txt
-          # jupytext --to notebook "$file"
-          # Use yq to extract Python files and execute jupytext
-          # jupytext --to notebook "$file"
+          while read line; do jupytext --to notebook "$line" ; done <convert.txt
           # jupytext --to notebook  $(find temp_examples -iname "*.py")
-          #    python -m ipykernel install --user --name "$NAME" --display-name "$DISPLAY_NAME"
-          #jupytext --set-kernel "$NAME"  $(find temp_examples -iname "*.ipynb")
-
-          #- name: Commit and push changes
+          jupytext --set-kernel "$KERNEL_NAME"  $(find temp_examples -iname "*.ipynb")
+          find temp_examples -name "*.ipynb" -exec sed -i 's/"display_name": ".*"/"display_name": "$DSIPLAY_NAME"/' {} \;
+            #- name: Commit and push changes
           #  run: |
           #    git config --global user.name "github-actions[bot]"
           #    git config --global user.email "github-actions[bot]@users.noreply.github.com"
