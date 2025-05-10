@@ -22,15 +22,14 @@ jobs:
       - name: Create new branch
         run: |
           #git checkout -B ${{ github.event.client_payload.tag }}
-          git checkout -B temp_branch
+          git checkout -B temp_branch # for testing
 
       - name: Checkout nest-simulator repo
         uses: actions/checkout@v4
         with:
-          repository: jessica-mitchell/nest-simulator
-          # for testing use known branch
-          ref: master  # Use the dynamically created branch
-          #ref: ${{ github.event.client_payload.tag }}  # Use the dynamically created branch
+          repository: jessica-mitchell/nest-simulator # for testing: replace with nest/nes-simulator
+          # ref: master # for testing with workflow dispatch
+          ref: ${{ github.event.client_payload.tag }}  # Use the dynamically created branch
           token: ${{ secrets.API_TOKEN_GITHUB }}
           path: nest-simulator # Directory to place the repository in
 
@@ -38,6 +37,7 @@ jobs:
         run: |
           # for testing make temp directory
           mkdir temp_examples
+          # mkdir notebooks
           rsync -aP --exclude '**.png' --exclude '**.gif' nest-simulator/pynest/examples temp_examples
 
       - name: "Install Python dependencies"
@@ -47,19 +47,13 @@ jobs:
 
       - name: "Convert to notebooks"
         run: |
-          # Use yq to extract Python files and execute jupytext
+          # use ipykernel to set kernelspec
           python -m ipykernel install --user --name "$KERNEL_NAME" --display-name "$DISPLAY_NAME"
+          # Use yq to extract Python files from yaml and execute jupytext
           { yq -r '.directories[].convert2notebooks[]?' 'pynest_examples_metadata.yaml'
           } > temp_examples/examples/convert.txt
-          cd temp_examples/examples/ #> convert.txt
+          cd temp_examples/examples/
           while read line; do jupytext --to notebook "$line" ; done <convert.txt
-          # jupytext --to notebook  $(find temp_examples -iname "*.py")
-          #      - name: "Set kernel"
-          #        run: |
-          # find . -name "*.ipynb" -exec sed -i 's/"name": ".*"/"name": "$KERNEL_NAME"/' {} \;
-          #          jupytext --set-kernel "$KERNEL_NAME"  $(find . -iname "*.ipynb")
-          # find . -name "*.ipynb" -exec sed -i 's/"display_name": ".*"/"display_name": "$DISPLAY_NAME"/' {} \;
-          #find . -name "*.ipynb" -exec sed -i -e 's/"name": ".*"/"name": "'"$KERNEL_NAME"'"/' -e 's/"display_name": ".*"/"display_name": "'"$DISPLAY_NAME"'"/' {} \;
 
       - name: Commit and push changes
         run: |
