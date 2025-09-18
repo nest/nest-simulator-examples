@@ -1,0 +1,39 @@
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 1 (use --cores to define parallelism)
+Rules claiming more threads will be scaled down.
+Job stats:
+job                                count    min threads    max threads
+-------------------------------  -------  -------------  -------------
+all                                    1              1              1
+generate_reference_data_LIF            1              1              1
+generate_reference_figures_IgAF        1              1              1
+generate_reference_figures_LIF         1              1              1
+scaling_experiment                     1              1              1
+total                                  5              1              1
+
+Select jobs to execute...
+
+[Thu Aug  1 13:41:28 2024]
+rule generate_reference_figures_IgAF:
+    input: model.py, parameter_dicts.py, generate_reference_figures.py, .IgAF_simulation_done
+    output: figures/TwoPopulationNetworkPlastic_ignore_and_fire_spikes.png, figures/TwoPopulationNetworkPlastic_ignore_and_fire_weight_distributions.png, figures/TwoPopulationNetworkPlastic_ignore_and_fire_connectivity_presim.png, figures/TwoPopulationNetworkPlastic_ignore_and_fire_connectivity_postsim.png
+    jobid: 3
+    resources: tmpdir=/tmp
+
+Removing temporary output file .IgAF_simulation_done.
+[Thu Aug  1 13:41:40 2024]
+Finished job 3.
+1 of 5 steps (20%) done
+Select jobs to execute...
+
+[Thu Aug  1 13:41:40 2024]
+rule scaling_experiment:
+    input: model.py, parameter_dicts.py, scaling.py
+    output: figures/scaling.png
+    jobid: 5
+    resources: tmpdir=/tmp
+
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /home/mitchell/Work/repo/nest-simulator/pynest/examples/ignore_and_fire/.snakemake/log/2024-08-01T134127.974564.snakemake.log

@@ -1,0 +1,23 @@
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 1 (use --cores to define parallelism)
+Rules claiming more threads will be scaled down.
+Job stats:
+job                   count    min threads    max threads
+------------------  -------  -------------  -------------
+all                       1              1              1
+scaling_experiment        1              1              1
+total                     2              1              1
+
+Select jobs to execute...
+
+[Thu Aug  1 13:56:46 2024]
+rule scaling_experiment:
+    input: model.py, parameter_dicts.py, scaling.py
+    output: figures/scaling.png
+    jobid: 5
+    resources: tmpdir=/tmp
+
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /home/mitchell/Work/repo/nest-simulator/pynest/examples/ignore_and_fire/.snakemake/log/2024-08-01T135646.013153.snakemake.log
