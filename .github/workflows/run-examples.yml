@@ -174,12 +174,12 @@ jobs:
 
       - name: "Install Python dependencies"
         run: |
-          python -m pip install --upgrade pip
-          pip install scipy matplotlib pandas mpi4py cython cycler imageio requests "pulp<2.8.0" snakemake ipython psutil pydot h5py
+          python3 -m pip install --upgrade pip
+          python3 -m pip install scipy matplotlib pandas mpi4py cython cycler imageio requests "pulp<2.8.0" snakemake ipython psutil pydot h5py
 
       - name: "Verify NEST installation"
         run: |
-          python -c "import nest; print(f'NEST {nest.__version__} installed successfully')"
+          python3 -c "import nest; print(f'NEST {nest.__version__} installed successfully')"
 
 
       - name: "Run batch: ${{ matrix.batch_name }}"
