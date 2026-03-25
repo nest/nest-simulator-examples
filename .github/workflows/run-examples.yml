@@ -20,9 +20,14 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'NEST tag to derive version label from (e.g. v3.10-rc1). Leave empty for dev-latest.'
+        description: 'NEST tag or branch to check out (e.g. v3.10-rc1). Leave empty for main.'
         required: false
         type: string
+      nest_simulator_repo:
+        description: 'nest-simulator repository to check out (e.g. jessica-mitchell/nest-simulator for testing)'
+        required: false
+        type: string
+        default: 'nest/nest-simulator'
       example_filter:
         description: 'Run only examples matching this pattern (e.g., "brunel" or "spatial_"). Leave empty for all.'
         required: false
@@ -63,7 +68,7 @@ jobs:
       - name: "Checkout nest-simulator"
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          repository: nest/nest-simulator
+          repository: ${{ github.event.client_payload.source_repo || inputs.nest_simulator_repo || 'nest/nest-simulator' }}
           ref: ${{ github.event.client_payload.tag || inputs.tag || 'main' }}
           path: nest-simulator
 
@@ -163,7 +168,7 @@ jobs:
       - name: "Checkout nest-simulator"
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          repository: nest/nest-simulator
+          repository: ${{ github.event.client_payload.source_repo || inputs.nest_simulator_repo || 'nest/nest-simulator' }}
           ref: ${{ github.event.client_payload.tag || inputs.tag || 'main' }}
           path: nest-simulator
 
