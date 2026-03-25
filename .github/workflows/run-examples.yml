@@ -1,0 +1,910 @@
+#
+# Workflow for running NEST Python and Snakemake examples using the nest/nest-simulator:dev Docker image.
+#
+# Reads examples.yml config and runs examples in batches using matrix strategy.
+# Uploads figures to GitHub Releases and deploys multi-version site to GitHub Pages.
+#
+# Triggers:
+#   - repository_dispatch (pre-release-sync): fired automatically by nest-simulator pre-release workflow
+#   - workflow_dispatch: manual run, optionally with a tag to label the version
+#   - schedule: nightly run against dev image
+#
+# Prerequisites:
+# - Enable GitHub Pages with Actions deployment in repository settings
+#
+name: "Run NEST examples"
+
+run-name: Run NEST examples ${{ github.event.client_payload.tag || inputs.tag || 'dev-latest' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'NEST tag to derive version label from (e.g. v3.10-rc1). Leave empty for dev-latest.'
+        required: false
+        type: string
+      example_filter:
+        description: 'Run only examples matching this pattern (e.g., "brunel" or "spatial_"). Leave empty for all.'
+        required: false
+        type: string
+      batch_size:
+        description: 'Number of examples per batch (default: 10)'
+        required: false
+        type: number
+        default: 10
+  repository_dispatch:
+    types: [pre-release-sync]
+  schedule:
+    - cron: '0 3 * * *'
+
+env:
+  BATCH_SIZE: ${{ github.event.inputs.batch_size || 10 }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Read config, extract NEST version, and generate batched matrix
+  # ---------------------------------------------------------------------------
+  prepare:
+    runs-on: ubuntu-22.04
+    outputs:
+      matrix: ${{ steps.generate-matrix.outputs.matrix }}
+      nest_version: ${{ steps.extract-version.outputs.version }}
+      nest_version_normalized: ${{ steps.extract-version.outputs.normalized }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        with:
+          egress-policy: audit
+          disable-telemetry: true
+
+      - name: "Checkout repository"
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: "Checkout nest-simulator"
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: nest/nest-simulator
+          ref: ${{ github.event.client_payload.tag || inputs.tag || 'main' }}
+          path: nest-simulator
+
+      - name: "Resolve NEST version"
+        id: extract-version
+        run: |
+          TAG="${{ github.event.client_payload.tag || inputs.tag }}"
+          if [ -n "$TAG" ]; then
+            VERSION=$(echo "$TAG" | sed 's/^v//' | grep -oE '^[0-9]+\.[0-9]+(\.[0-9]+)?' || echo "dev")
+            NORMALIZED=$(echo "$TAG" | sed 's/^v//' | grep -oE '^[0-9]+\.[0-9]+' | sed 's/^/v/' || echo "dev-latest")
+          else
+            VERSION="dev"
+            NORMALIZED="dev-latest"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "normalized=$NORMALIZED" >> $GITHUB_OUTPUT
+          echo "NEST version : $VERSION (normalized: $NORMALIZED)"
+
+      - name: "Generate batched matrix from config"
+        id: generate-matrix
+        run: |
+          # Install yq for YAML parsing
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.35.1/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+          FILTER="${{ github.event.inputs.example_filter }}"
+          BATCH_SIZE="${{ env.BATCH_SIZE }}"
+
+          # Extract examples with type=python or type=snakemake from config
+          if [ -n "$FILTER" ]; then
+            EXAMPLES=$(yq -o=json -I=0 '.examples | map(select((.type == "python" or .type == "snakemake") and .name | test("'"$FILTER"'")))' nest-simulator/pynest/examples/examples.yml)
+          else
+            EXAMPLES=$(yq -o=json -I=0 '.examples | map(select(.type == "python" or .type == "snakemake"))' nest-simulator/pynest/examples/examples.yml)
+          fi
+
+          # Count examples
+          COUNT=$(echo "$EXAMPLES" | yq 'length')
+          echo "Found $COUNT examples to run"
+
+          # Calculate number of batches
+          NUM_BATCHES=$(( (COUNT + BATCH_SIZE - 1) / BATCH_SIZE ))
+          echo "Creating $NUM_BATCHES batches of up to $BATCH_SIZE examples each"
+
+          # Capture Python output
+          MATRIX=$(python3 << EOF
+          import json
+          import math
+
+          examples = json.loads('''$EXAMPLES''')
+          batch_size = int("$BATCH_SIZE")
+          num_batches = math.ceil(len(examples) / batch_size)
+
+          batches = []
+          for i in range(num_batches):
+              start = i * batch_size
+              end = min(start + batch_size, len(examples))
+              batch_examples = examples[start:end]
+
+              # Include type and post_script in batch data for handling different example types
+              batch_data = [{"name": ex["name"], "path": ex["path"], "type": ex["type"], "post_script": ex.get("post_script", "")} for ex in batch_examples]
+
+              batches.append({
+                  "batch_id": i + 1,
+                  "batch_name": f"batch-{i+1:02d}",
+                  "examples": json.dumps(batch_data)
+              })
+
+          matrix = {"include": batches}
+          print(json.dumps(matrix))
+          EOF
+          )
+
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Run batches of examples in parallel
+  # ---------------------------------------------------------------------------
+  run-batch:
+    needs: prepare
+    runs-on: ubuntu-22.04
+    container:
+      image: nest/nest-simulator:dev
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        with:
+          egress-policy: audit
+          disable-telemetry: true
+
+      - name: "Checkout repository"
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: "Checkout nest-simulator"
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: nest/nest-simulator
+          ref: ${{ github.event.client_payload.tag || inputs.tag || 'main' }}
+          path: nest-simulator
+
+      - name: "Install Python dependencies"
+        run: |
+          python -m pip install --upgrade pip
+          pip install scipy matplotlib pandas mpi4py cython cycler imageio requests "pulp<2.8.0" snakemake ipython psutil pydot h5py
+
+      - name: "Verify NEST installation"
+        run: |
+          python -c "import nest; print(f'NEST {nest.__version__} installed successfully')"
+
+
+      - name: "Run batch: ${{ matrix.batch_name }}"
+        id: run-batch
+        working-directory: nest-simulator/pynest/examples
+        run: |
+          mkdir -p outputs
+          RESULTS_FILE="outputs/results.json"
+          echo '[]' > "$RESULTS_FILE"
+
+          # Parse examples JSON
+          EXAMPLES='${{ matrix.examples }}'
+
+          # Run each example in the batch
+          echo "$EXAMPLES" | python3 -c "
+          import json
+          import sys
+          examples = json.load(sys.stdin)
+          for ex in examples:
+              print(f\"{ex['name']}|{ex['path']}|{ex['type']}|{ex.get('post_script', '')}\")
+          " | while IFS='|' read -r name path type post_script; do
+            echo ""
+            echo "========================================"
+            echo "Running: $name"
+            echo "Path: $path"
+            echo "Type: $type"
+            echo "========================================"
+
+            mkdir -p "outputs/$name"
+
+            set +e
+            if [ "$type" = "snakemake" ]; then
+              # Handle snakemake examples (run in the example directory)
+              EXAMPLE_DIR=$(dirname "$path")
+              if [ "$EXAMPLE_DIR" = "." ]; then
+                EXAMPLE_DIR="$path"
+              fi
+
+              echo "Running snakemake in $EXAMPLE_DIR"
+              cd "$EXAMPLE_DIR"
+              mkdir -p figures
+              snakemake -c4 2>&1 | tee "../outputs/$name/run.log"
+              EXIT_CODE=${PIPESTATUS[0]}
+              cd ..
+
+              # Copy figures from snakemake output
+              if [ -d "$EXAMPLE_DIR/figures" ]; then
+                cp -r "$EXAMPLE_DIR/figures/"* "outputs/$name/" 2>/dev/null || true
+              fi
+              # Also check for figures in the main directory
+              find "$EXAMPLE_DIR" -maxdepth 1 -type f \( -name "*.png" -o -name "*.pdf" -o -name "*.svg" -o -name "*.gif" \) -exec cp {} "outputs/$name/" \; 2>/dev/null || true
+            else
+              # Handle python examples
+              if [ -n "$post_script" ]; then
+                python run_example.py "$path" "outputs/$name" "$post_script" 2>&1 | tee "outputs/$name/run.log"
+              else
+                python run_example.py "$path" "outputs/$name" 2>&1 | tee "outputs/$name/run.log"
+              fi
+              EXIT_CODE=${PIPESTATUS[0]}
+            fi
+            set -e
+
+            # Record result
+            if [ $EXIT_CODE -eq 0 ]; then
+              STATUS="success"
+              echo "Result: SUCCESS"
+            else
+              STATUS="failed"
+              echo "::warning::Example $name failed with exit code $EXIT_CODE"
+              echo "Result: FAILED (exit code $EXIT_CODE)"
+            fi
+
+            # Count output files
+            OUTPUT_COUNT=$(find "outputs/$name" -type f \( -name "*.png" -o -name "*.pdf" -o -name "*.svg" -o -name "*.gif" \) 2>/dev/null | wc -l)
+            echo "Generated $OUTPUT_COUNT figure(s)"
+
+            # Append to results
+            python3 << PYEOF
+          import json
+          with open("$RESULTS_FILE", "r") as f:
+              results = json.load(f)
+          results.append({
+              "name": "$name",
+              "type": "$type",
+              "status": "$STATUS",
+              "exit_code": $EXIT_CODE,
+              "outputs": $OUTPUT_COUNT
+          })
+          with open("$RESULTS_FILE", "w") as f:
+              json.dump(results, f, indent=2)
+          PYEOF
+
+          done
+
+          # Summary
+          echo ""
+          echo "========================================"
+          echo "Batch Summary"
+          echo "========================================"
+          cat "$RESULTS_FILE"
+
+      - name: "Upload batch outputs"
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        if: always()
+        with:
+          name: ${{ matrix.batch_name }}
+          path: pynest/examples/outputs/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Create GitHub Release with figures
+  # ---------------------------------------------------------------------------
+  create-release:
+    needs: [prepare, run-batch]
+    if: always()
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    outputs:
+      release_tag: ${{ steps.create-release.outputs.tag }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        with:
+          egress-policy: audit
+          disable-telemetry: true
+
+      - name: "Checkout repository"
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: "Download all batch artifacts"
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          pattern: batch-*
+          path: all-outputs
+          merge-multiple: false
+
+      - name: "Collect and organize figures"
+        id: collect-figures
+        run: |
+          NEST_VERSION="${{ needs.prepare.outputs.nest_version_normalized }}"
+          echo "Creating release for NEST $NEST_VERSION"
+
+          mkdir -p figures/examples
+
+          # Debug: show downloaded structure
+          echo "Downloaded artifact structure:"
+          find all-outputs -type f | head -50
+
+          # Collect results from all batches
+          echo '[]' > all-results.json
+
+          # Move each example's outputs and collect results
+          for batch_dir in all-outputs/batch-*/; do
+            if [ -d "$batch_dir" ]; then
+              echo "Processing $batch_dir"
+              echo "Contents of $batch_dir:"
+              ls -la "$batch_dir" | head -20
+
+              # Merge results
+              if [ -f "${batch_dir}results.json" ]; then
+                python3 << PYEOF
+          import json
+          with open("all-results.json", "r") as f:
+              all_results = json.load(f)
+          with open("${batch_dir}results.json", "r") as f:
+              batch_results = json.load(f)
+          all_results.extend(batch_results)
+          with open("all-results.json", "w") as f:
+              json.dump(all_results, f, indent=2)
+          PYEOF
+              fi
+
+              # Copy example outputs
+              for example_dir in "${batch_dir}"*/; do
+                if [ -d "$example_dir" ]; then
+                  example_name=$(basename "$example_dir")
+                  if [ "$example_name" != "results.json" ]; then
+                    mkdir -p "figures/examples/$example_name"
+                    # Copy only figure files, not logs
+                    find "$example_dir" -type f \( -name "*.png" -o -name "*.pdf" -o -name "*.svg" -o -name "*.gif" \) -exec cp {} "figures/examples/$example_name/" \; 2>/dev/null || true
+                  fi
+                fi
+              done
+            fi
+          done
+
+          # Copy results to figures directory
+          cp all-results.json figures/results.json
+
+          # Generate summary
+          python3 << 'PYEOF'
+          import json
+          with open("all-results.json", "r") as f:
+              results = json.load(f)
+
+          total = len(results)
+          success = sum(1 for r in results if r["status"] == "success")
+          failed = sum(1 for r in results if r["status"] == "failed")
+          outputs = sum(r["outputs"] for r in results)
+
+          print(f"Total examples: {total}")
+          print(f"Successful: {success}")
+          print(f"Failed: {failed}")
+          print(f"Total figures generated: {outputs}")
+
+          if failed > 0:
+              print("\nFailed examples:")
+              for r in results:
+                  if r["status"] == "failed":
+                      print(f"  - {r['name']} (exit code {r['exit_code']})")
+          PYEOF
+
+          # Show what will be in the tarball
+          echo "Figures directory structure:"
+          find figures -type f | head -50
+          echo "Total files: $(find figures -type f | wc -l)"
+
+          # Create tarball
+          tar -czf "nest-example-figures-${NEST_VERSION}.tar.gz" -C figures .
+          echo "Created archive: nest-example-figures-${NEST_VERSION}.tar.gz"
+          ls -lh "nest-example-figures-${NEST_VERSION}.tar.gz"
+
+      - name: "Create or update GitHub Release"
+        id: create-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NEST_VERSION="${{ needs.prepare.outputs.nest_version_normalized }}"
+          TAG="figures-${NEST_VERSION}"
+          ASSET="nest-example-figures-${NEST_VERSION}.tar.gz"
+
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+          # Check if release exists
+          if gh release view "$TAG" &>/dev/null; then
+            echo "Release $TAG exists, updating..."
+            # Delete existing asset if present
+            gh release delete-asset "$TAG" "$ASSET" --yes 2>/dev/null || true
+            # Upload new asset
+            gh release upload "$TAG" "$ASSET" --clobber
+          else
+            echo "Creating new release $TAG..."
+            gh release create "$TAG" "$ASSET" \
+              --title "NEST Example Figures - ${NEST_VERSION}" \
+              --notes "Generated figures from NEST examples for version ${NEST_VERSION}.
+
+          Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          NEST version: ${{ needs.prepare.outputs.nest_version }}
+
+          Download and extract to view example outputs."
+          fi
+
+          echo "Release created/updated: $TAG"
+
+  # ---------------------------------------------------------------------------
+  # Job 4: Deploy multi-version site to GitHub Pages
+  # ---------------------------------------------------------------------------
+  deploy-pages:
+    needs: [prepare, create-release]
+    if: always() && needs.create-release.result == 'success'
+    runs-on: ubuntu-22.04
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        with:
+          egress-policy: audit
+          disable-telemetry: true
+
+      - name: "Checkout repository"
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: "Fetch latest 3 figure releases"
+        id: fetch-releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p _site
+
+          # Get all figure releases using JSON output for reliable parsing
+          # Match both figures-v* (versioned) and figures-dev-* (development)
+          echo "Fetching release list..."
+          RELEASES=$(gh release list --limit 50 --json tagName --jq '.[].tagName' | \
+            grep -E "^figures-(v[0-9]|dev-)" | \
+            head -3) || true
+
+          echo "Found releases:"
+          echo "$RELEASES"
+
+          if [ -z "$RELEASES" ]; then
+            echo "No figure releases found"
+            echo "versions=" >> $GITHUB_OUTPUT
+            echo "latest=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          VERSIONS=""
+          LATEST=""
+
+          for TAG in $RELEASES; do
+            VERSION=$(echo "$TAG" | sed 's/figures-//')
+            echo "Downloading $TAG..."
+
+            mkdir -p "_site/$VERSION"
+
+            # Download and extract release asset
+            gh release download "$TAG" --pattern "*.tar.gz" --dir /tmp
+            ASSET=$(ls /tmp/nest-example-figures-*.tar.gz 2>/dev/null | head -1)
+
+            if [ -n "$ASSET" ]; then
+              tar -xzf "$ASSET" -C "_site/$VERSION"
+              rm "$ASSET"
+              echo "Extracted $TAG to _site/$VERSION"
+              ls -la "_site/$VERSION/"
+
+              if [ -z "$LATEST" ]; then
+                LATEST="$VERSION"
+              fi
+              VERSIONS="$VERSIONS $VERSION"
+            else
+              echo "::warning::No asset found for $TAG"
+            fi
+          done
+
+          echo "versions=$VERSIONS" >> $GITHUB_OUTPUT
+          echo "latest=$LATEST" >> $GITHUB_OUTPUT
+          echo "Final versions: $VERSIONS"
+          echo "Latest: $LATEST"
+
+      - name: "Create latest symlink and index pages"
+        env:
+          VERSIONS: ${{ steps.fetch-releases.outputs.versions }}
+          LATEST: ${{ steps.fetch-releases.outputs.latest }}
+        run: |
+          echo "VERSIONS: $VERSIONS"
+          echo "LATEST: $LATEST"
+
+          if [ -z "$VERSIONS" ]; then
+            echo "No versions to deploy"
+            exit 0
+          fi
+
+          # Extract skipped examples from config before changing directory
+          EXAMPLES_YML="${GITHUB_WORKSPACE}/nest-simulator/pynest/examples/examples.yml"
+          SKIPPED_JSON=$(EXAMPLES_YML="$EXAMPLES_YML" python3 << 'GETSKIPPED'
+          import json, sys, os
+          try:
+              import yaml
+              with open(os.environ['EXAMPLES_YML']) as f:
+                  data = yaml.safe_load(f)
+              skipped = [{'name': ex['name'], 'notes': ex.get('notes', '')}
+                         for ex in data.get('examples', []) if ex.get('type') == 'skip']
+              print(json.dumps(skipped))
+          except Exception as e:
+              sys.stderr.write(str(e) + '\n')
+              print('[]')
+          GETSKIPPED
+          )
+          echo "Skipped examples: $SKIPPED_JSON"
+
+          cd _site
+
+          # Create 'latest' symlink (or directory copy for compatibility)
+          if [ -n "$LATEST" ] && [ -d "$LATEST" ]; then
+            # Use directory copy instead of symlink for GitHub Pages compatibility
+            cp -r "$LATEST" latest
+            echo "Created latest/ pointing to $LATEST"
+          fi
+
+          # Generate main index.html (version selector)
+          python3 << 'PYEOF'
+          import os
+          from datetime import datetime
+
+          versions = os.environ.get("VERSIONS", "").split()
+          latest = os.environ.get("LATEST", "")
+
+          html = '''<!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>NEST Example Figures</title>
+            <style>
+              * { box-sizing: border-box; }
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 40px 20px;
+                background: #f8f9fa;
+                color: #072f42;
+              }
+              header {
+                text-align: center;
+                margin-bottom: 40px;
+              }
+              h1 {
+                color: #072f42;
+                font-size: 2.5rem;
+                margin-bottom: 10px;
+              }
+              h1 span { color: #ff6633; }
+              .subtitle {
+                color: #666;
+                font-size: 1.1rem;
+              }
+              .version-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 20px;
+                margin-top: 30px;
+              }
+              .version-card {
+                background: white;
+                border-radius: 12px;
+                padding: 24px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                transition: transform 0.2s, box-shadow 0.2s;
+                text-decoration: none;
+                color: inherit;
+                display: block;
+              }
+              .version-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+              }
+              .version-card.latest {
+                border: 2px solid #ff6633;
+              }
+              .version-card h2 {
+                margin: 0 0 8px 0;
+                font-size: 1.5rem;
+                color: #072f42;
+              }
+              .badge {
+                display: inline-block;
+                background: #ff6633;
+                color: white;
+                padding: 4px 10px;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                margin-left: 8px;
+                vertical-align: middle;
+              }
+              .version-card p {
+                margin: 0;
+                color: #666;
+              }
+              footer {
+                text-align: center;
+                margin-top: 60px;
+                padding-top: 20px;
+                border-top: 1px solid #ddd;
+                color: #888;
+                font-size: 0.9rem;
+              }
+              footer a { color: #ff6633; }
+            </style>
+          </head>
+          <body>
+            <header>
+              <h1>NEST <span>Example Figures</span></h1>
+              <p class="subtitle">Generated outputs from NEST simulator examples</p>
+            </header>
+
+            <main>
+              <div class="version-grid">
+          '''
+
+          # Latest card first
+          if latest:
+              html += f'''
+                <a href="latest/examples/" class="version-card latest">
+                  <h2>Latest<span class="badge">{latest}</span></h2>
+                  <p>View the most recent example outputs</p>
+                </a>
+          '''
+
+          # Individual version cards
+          for version in versions:
+              is_latest = version == latest
+              html += f'''
+                <a href="{version}/examples/" class="version-card">
+                  <h2>{version}{"<span class='badge'>Current</span>" if is_latest else ""}</h2>
+                  <p>Example figures for NEST {version}</p>
+                </a>
+          '''
+
+          html += f'''
+              </div>
+            </main>
+
+            <footer>
+              <p>Generated on {datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")}</p>
+              <p><a href="https://nest-simulator.org">NEST Simulator</a></p>
+            </footer>
+          </body>
+          </html>
+          '''
+
+          with open("index.html", "w") as f:
+              f.write(html)
+          print("Generated main index.html")
+          PYEOF
+
+          # Generate per-version example listing pages
+          for VERSION_DIR in */; do
+            VERSION=$(basename "$VERSION_DIR")
+            if [ -d "$VERSION_DIR/examples" ] && [ -f "$VERSION_DIR/results.json" ]; then
+              python3 << PYEOF
+          import json
+          import os
+          from datetime import datetime
+
+          version = "$VERSION"
+          version_dir = "$VERSION_DIR"
+          skipped = json.loads('''$SKIPPED_JSON''')
+
+          with open(f"{version_dir}/results.json", "r") as f:
+              results = json.load(f)
+
+          results.sort(key=lambda x: x["name"])
+
+          total = len(results)
+          success = sum(1 for r in results if r["status"] == "success")
+          failed = total - success
+
+          html = f'''<!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>NEST Examples - {version}</title>
+            <style>
+              * {{ box-sizing: border-box; }}
+              body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 20px;
+                background: #f8f9fa;
+                color: #072f42;
+              }}
+              header {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+                gap: 10px;
+              }}
+              h1 {{
+                color: #072f42;
+                margin: 0;
+              }}
+              h1 span {{ color: #ff6633; }}
+              .back-link {{
+                color: #ff6633;
+                text-decoration: none;
+                font-weight: 500;
+              }}
+              .back-link:hover {{ text-decoration: underline; }}
+              .summary {{
+                background: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              }}
+              .summary .success {{ color: #22863a; font-weight: 600; }}
+              .summary .failed {{ color: #cb2431; font-weight: 600; }}
+              .skipped-section {{
+                background: white;
+                border: 1px solid #ddd;
+                border-left: 4px solid #b08800;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+              }}
+              .skipped-section summary {{
+                padding: 12px 16px;
+                cursor: pointer;
+                font-weight: 600;
+                color: #7a6000;
+                user-select: none;
+              }}
+              .skipped-section summary:hover {{ background: #fffbe6; border-radius: 8px; }}
+              .skipped-list {{
+                padding: 0 16px 12px 16px;
+                margin: 0;
+                list-style: none;
+              }}
+              .skipped-list li {{
+                padding: 4px 0;
+                font-size: 13px;
+                border-bottom: 1px solid #f0e8c0;
+              }}
+              .skipped-list li:last-child {{ border-bottom: none; }}
+              .skipped-list .skip-name {{ font-family: monospace; color: #333; }}
+              .skipped-list .skip-note {{ color: #888; margin-left: 8px; font-style: italic; }}
+              .example-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 15px;
+              }}
+              .example-card {{
+                background: white;
+                border: 1px solid #ddd;
+                padding: 15px;
+                border-radius: 8px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+              }}
+              .example-card.success {{ border-left: 4px solid #22863a; }}
+              .example-card.failed {{ border-left: 4px solid #cb2431; background: #ffeef0; }}
+              .example-card h3 {{
+                margin: 0 0 10px 0;
+                font-size: 14px;
+                word-break: break-word;
+              }}
+              .example-card .meta {{
+                font-size: 12px;
+                color: #666;
+                margin-bottom: 10px;
+              }}
+              .example-card ul {{
+                margin: 0;
+                padding-left: 20px;
+                font-size: 13px;
+              }}
+              .example-card img {{
+                max-width: 100%;
+                height: auto;
+                margin-top: 10px;
+                border-radius: 4px;
+              }}
+            </style>
+          </head>
+          <body>
+            <header>
+              <h1>NEST Examples - <span>{version}</span></h1>
+              <a href="../../" class="back-link">&larr; All Versions</a>
+            </header>
+
+            <div class="summary">
+              <strong>Total:</strong> {total} examples |
+              <span class="success">Successful: {success}</span> |
+              <span class="failed">Failed: {failed}</span>
+              {f'| <span style="color:#7a6000;font-weight:600">Skipped: {len(skipped)}</span>' if skipped else ''}
+            </div>
+          '''
+
+          if skipped:
+              html += f'''
+            <details class="skipped-section">
+              <summary>&#9888; Skipped examples ({len(skipped)})</summary>
+              <ul class="skipped-list">
+          '''
+              for s in sorted(skipped, key=lambda x: x["name"]):
+                  note = f'<span class="skip-note">— {s["notes"]}</span>' if s.get("notes") else ""
+                  html += f'<li><span class="skip-name">{s["name"]}</span>{note}</li>\n'
+              html += '''
+              </ul>
+            </details>
+          '''
+
+          html += '''
+            <div class="example-grid">
+          '''
+
+          for result in results:
+              name = result["name"]
+              status = result["status"]
+              outputs = result["outputs"]
+              example_type = result.get("type", "python")
+
+              example_dir = f"{version_dir}examples/{name}"
+              files = []
+              if os.path.isdir(example_dir):
+                  files = [f for f in os.listdir(example_dir) if f.endswith(('.png', '.pdf', '.svg', '.gif'))]
+
+              type_badge = f" [{example_type}]" if example_type != "python" else ""
+
+              html += f'''
+              <div class="example-card {status}">
+                <h3>{name}{type_badge}</h3>
+                <div class="meta">Status: {status.upper()} | Figures: {outputs}</div>
+              '''
+
+              if files:
+                  html += '<ul>'
+                  for f in sorted(files):
+                      html += f'<li><a href="{name}/{f}">{f}</a></li>'
+                  html += '</ul>'
+
+              html += '</div>'
+
+          html += '''
+            </div>
+          </body>
+          </html>
+          '''
+
+          with open(f"{version_dir}examples/index.html", "w") as f:
+              f.write(html)
+          print(f"Generated index for {version}")
+          PYEOF
+            fi
+          done
+
+          echo "Site structure:"
+          find . -name "index.html" -o -name "*.png" -o -name "*.gif" | head -20
+
+      - name: "Setup Pages"
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+
+      - name: "Upload Pages artifact"
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        with:
+          path: _site
+
+      - name: "Deploy to GitHub Pages"
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
