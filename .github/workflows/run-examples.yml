@@ -291,7 +291,7 @@ jobs:
         if: always()
         with:
           name: ${{ matrix.batch_name }}
-          path: pynest/examples/outputs/
+          path: nest-simulator/pynest/examples/outputs/
           retention-days: 7
           if-no-files-found: ignore
 
