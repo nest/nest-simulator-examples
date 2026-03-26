@@ -178,6 +178,14 @@ jobs:
         run: |
           python3 -m pip install --break-system-packages scipy matplotlib pandas mpi4py cython cycler imageio requests "pulp<2.8.0" snakemake ipython psutil pydot h5py
 
+      - name: "Locate NEST environment"
+        run: |
+          echo "=== nest_vars.sh ===" && find / -name "nest_vars.sh" 2>/dev/null || true
+          echo "=== nest executable ===" && which nest || true
+          echo "=== PyNEST location ===" && find / -name "*.pth" 2>/dev/null | xargs grep -l nest 2>/dev/null || true
+          echo "=== PYTHONPATH ===" && echo "${PYTHONPATH:-not set}"
+          echo "=== sys.path ===" && python3 -c "import sys; print('\n'.join(sys.path))"
+
       - name: "Verify NEST installation"
         run: |
           python3 -c "import nest; print(f'NEST {nest.__version__} installed successfully')"
