@@ -173,9 +173,10 @@ jobs:
           path: nest-simulator
 
       - name: "Install Python dependencies"
+        # --break-system-packages is intentional: this is a throwaway CI container.
+        # When moving to a versioned pre-release image, replace with a purpose-built CI image.
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install scipy matplotlib pandas mpi4py cython cycler imageio requests "pulp<2.8.0" snakemake ipython psutil pydot h5py
+          python3 -m pip install --break-system-packages scipy matplotlib pandas mpi4py cython cycler imageio requests "pulp<2.8.0" snakemake ipython psutil pydot h5py
 
       - name: "Verify NEST installation"
         run: |
