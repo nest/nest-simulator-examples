@@ -76,9 +76,10 @@ jobs:
         id: extract-version
         run: |
           TAG="${{ github.event.client_payload.tag || inputs.tag }}"
-          if [ -n "$TAG" ]; then
-            VERSION=$(echo "$TAG" | sed 's/^v//' | grep -oE '^[0-9]+\.[0-9]+(\.[0-9]+)?' || echo "dev")
-            NORMALIZED=$(echo "$TAG" | sed 's/^v//' | grep -oE '^[0-9]+\.[0-9]+' | sed 's/^/v/' || echo "dev-latest")
+          SEMVER=$(echo "$TAG" | grep -oE '^v?[0-9]+\.[0-9]+' || true)
+          if [ -n "$SEMVER" ]; then
+            VERSION=$(echo "$SEMVER" | sed 's/^v//')
+            NORMALIZED="v${VERSION}"
           else
             VERSION="dev"
             NORMALIZED="dev-latest"
