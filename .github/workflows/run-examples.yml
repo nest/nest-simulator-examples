@@ -192,7 +192,7 @@ jobs:
         run: |
           RUN_EXAMPLE="$GITHUB_WORKSPACE/.github/scripts/run_example.py"
           mkdir -p outputs
-          RESULTS_FILE="outputs/results.json"
+          RESULTS_FILE="outputs/results-${{ matrix.batch_name }}.json"
           echo '[]' > "$RESULTS_FILE"
 
           # Parse examples JSON
@@ -321,7 +321,7 @@ jobs:
         with:
           pattern: batch-*
           path: all-outputs
-          merge-multiple: false
+          merge-multiple: true
 
       - name: "Collect and organize figures"
         id: collect-figures
@@ -335,42 +335,29 @@ jobs:
           echo "Downloaded artifact structure:"
           find all-outputs -type f | head -50
 
-          # Collect results from all batches
+          # Merge results from all batches (each batch wrote results-batch-XX.json)
           echo '[]' > all-results.json
+          for results_file in all-outputs/results-batch-*.json; do
+            [ -f "$results_file" ] || continue
+            python3 << PYEOF
+import json
+with open("all-results.json") as f:
+    all_results = json.load(f)
+with open("$results_file") as f:
+    batch_results = json.load(f)
+all_results.extend(batch_results)
+with open("all-results.json", "w") as f:
+    json.dump(all_results, f, indent=2)
+PYEOF
+          done
 
-          # Move each example's outputs and collect results
-          for batch_dir in all-outputs/batch-*/; do
-            if [ -d "$batch_dir" ]; then
-              echo "Processing $batch_dir"
-              echo "Contents of $batch_dir:"
-              ls -la "$batch_dir" | head -20
-
-              # Merge results
-              if [ -f "${batch_dir}results.json" ]; then
-                python3 << PYEOF
-          import json
-          with open("all-results.json", "r") as f:
-              all_results = json.load(f)
-          with open("${batch_dir}results.json", "r") as f:
-              batch_results = json.load(f)
-          all_results.extend(batch_results)
-          with open("all-results.json", "w") as f:
-              json.dump(all_results, f, indent=2)
-          PYEOF
-              fi
-
-              # Copy example outputs
-              for example_dir in "${batch_dir}"*/; do
-                if [ -d "$example_dir" ]; then
-                  example_name=$(basename "$example_dir")
-                  if [ "$example_name" != "results.json" ]; then
-                    mkdir -p "figures/examples/$example_name"
-                    # Copy only figure files, not logs
-                    find "$example_dir" -type f \( -name "*.png" -o -name "*.pdf" -o -name "*.svg" -o -name "*.gif" \) -exec cp {} "figures/examples/$example_name/" \; 2>/dev/null || true
-                  fi
-                fi
-              done
-            fi
+          # Copy example outputs (example dirs sit directly in all-outputs/)
+          for example_dir in all-outputs/*/; do
+            [ -d "$example_dir" ] || continue
+            example_name=$(basename "$example_dir")
+            mkdir -p "figures/examples/$example_name"
+            find "$example_dir" -type f \( -name "*.png" -o -name "*.pdf" -o -name "*.svg" -o -name "*.gif" \) \
+              -exec cp {} "figures/examples/$example_name/" \; 2>/dev/null || true
           done
 
           # Copy results to figures directory
