@@ -339,16 +339,7 @@ jobs:
           echo '[]' > all-results.json
           for results_file in all-outputs/results-batch-*.json; do
             [ -f "$results_file" ] || continue
-            python3 << PYEOF
-            import json
-            with open("all-results.json") as f:
-                all_results = json.load(f)
-            with open("$results_file") as f:
-                batch_results = json.load(f)
-            all_results.extend(batch_results)
-            with open("all-results.json", "w") as f:
-                json.dump(all_results, f, indent=2)
-            PYEOF
+            python3 -c "import json; a=json.load(open('all-results.json')); b=json.load(open('$results_file')); a.extend(b); json.dump(a, open('all-results.json','w'), indent=2)"
           done
 
           # Copy example outputs (example dirs sit directly in all-outputs/)
