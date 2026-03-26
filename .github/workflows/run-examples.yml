@@ -180,11 +180,10 @@ jobs:
 
       - name: "Locate NEST environment"
         run: |
-          echo "=== nest_vars.sh ===" && find / -name "nest_vars.sh" 2>/dev/null || true
-          echo "=== nest executable ===" && which nest || true
-          echo "=== PyNEST location ===" && find / -name "*.pth" 2>/dev/null | xargs grep -l nest 2>/dev/null || true
-          echo "=== PYTHONPATH ===" && echo "${PYTHONPATH:-not set}"
-          echo "=== sys.path ===" && python3 -c "import sys; print('\n'.join(sys.path))"
+          echo "=== pynestkernel ===" && find / -name "pynestkernel*" 2>/dev/null || true
+          echo "=== nest __init__.py ===" && find / -path "*/nest/__init__.py" 2>/dev/null || true
+          echo "=== /opt contents ===" && ls /opt 2>/dev/null || true
+          echo "=== /usr/local/lib ===" && ls /usr/local/lib 2>/dev/null || true
 
       - name: "Verify NEST installation"
         run: |
