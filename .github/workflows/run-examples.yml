@@ -187,7 +187,9 @@ jobs:
       - name: "Run batch: ${{ matrix.batch_name }}"
         id: run-batch
         working-directory: nest-simulator/pynest/examples
+        shell: bash
         run: |
+          RUN_EXAMPLE="$GITHUB_WORKSPACE/.github/scripts/run_example.py"
           mkdir -p outputs
           RESULTS_FILE="outputs/results.json"
           echo '[]' > "$RESULTS_FILE"
@@ -236,9 +238,9 @@ jobs:
             else
               # Handle python examples
               if [ -n "$post_script" ]; then
-                python run_example.py "$path" "outputs/$name" "$post_script" 2>&1 | tee "outputs/$name/run.log"
+                python3 "$RUN_EXAMPLE" "$path" "outputs/$name" "$post_script" 2>&1 | tee "outputs/$name/run.log"
               else
-                python run_example.py "$path" "outputs/$name" 2>&1 | tee "outputs/$name/run.log"
+                python3 "$RUN_EXAMPLE" "$path" "outputs/$name" 2>&1 | tee "outputs/$name/run.log"
               fi
               EXIT_CODE=${PIPESTATUS[0]}
             fi
