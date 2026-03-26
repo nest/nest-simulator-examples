@@ -172,18 +172,12 @@ jobs:
           ref: ${{ github.event.client_payload.tag || inputs.tag || 'main' }}
           path: nest-simulator
 
-      - name: "Install Python dependencies"
-        # --break-system-packages is intentional: this is a throwaway CI container.
-        # When moving to a versioned pre-release image, replace with a purpose-built CI image.
-        run: |
-          python3 -m pip install --break-system-packages scipy matplotlib pandas mpi4py cython cycler imageio requests "pulp<2.8.0" snakemake ipython psutil pydot h5py
+      - name: "Activate NEST virtualenv"
+        run: echo "/root/.env/bin" >> $GITHUB_PATH
 
-      - name: "Locate NEST environment"
+      - name: "Install Python dependencies"
         run: |
-          echo "=== pynestkernel ===" && find / -name "pynestkernel*" 2>/dev/null || true
-          echo "=== nest __init__.py ===" && find / -path "*/nest/__init__.py" 2>/dev/null || true
-          echo "=== /opt contents ===" && ls /opt 2>/dev/null || true
-          echo "=== /usr/local/lib ===" && ls /usr/local/lib 2>/dev/null || true
+          pip install scipy matplotlib pandas mpi4py cython cycler imageio requests "pulp<2.8.0" snakemake ipython psutil pydot h5py
 
       - name: "Verify NEST installation"
         run: |
