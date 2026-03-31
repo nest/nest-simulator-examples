@@ -39,8 +39,6 @@ on:
         default: 10
   repository_dispatch:
     types: [pre-release-sync]
-  schedule:
-    - cron: '0 3 * * *'
 
 env:
   BATCH_SIZE: ${{ github.event.inputs.batch_size || 10 }}
@@ -55,6 +53,7 @@ jobs:
       matrix: ${{ steps.generate-matrix.outputs.matrix }}
       nest_version: ${{ steps.extract-version.outputs.version }}
       nest_version_normalized: ${{ steps.extract-version.outputs.normalized }}
+      skipped_json: ${{ steps.skipped.outputs.skipped_json }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
@@ -143,6 +142,12 @@ jobs:
           )
 
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
+      - name: "Extract skipped examples"
+        id: skipped
+        run: |
+          SKIPPED=$(python3 -c "import json, yaml; data=yaml.safe_load(open('nest-simulator/pynest/examples/examples.yml')); print(json.dumps([{'name':e['name'],'notes':e.get('notes','')} for e in data['examples'] if e.get('type')=='skip']))")
+          echo "skipped_json=$SKIPPED" >> $GITHUB_OUTPUT
 
   # ---------------------------------------------------------------------------
   # Job 2: Run batches of examples in parallel
@@ -513,23 +518,7 @@ jobs:
             exit 0
           fi
 
-          # Extract skipped examples from config before changing directory
-          EXAMPLES_YML="${GITHUB_WORKSPACE}/nest-simulator/pynest/examples/examples.yml"
-          SKIPPED_JSON=$(EXAMPLES_YML="$EXAMPLES_YML" python3 << 'GETSKIPPED'
-          import json, sys, os
-          try:
-              import yaml
-              with open(os.environ['EXAMPLES_YML']) as f:
-                  data = yaml.safe_load(f)
-              skipped = [{'name': ex['name'], 'notes': ex.get('notes', '')}
-                         for ex in data.get('examples', []) if ex.get('type') == 'skip']
-              print(json.dumps(skipped))
-          except Exception as e:
-              sys.stderr.write(str(e) + '\n')
-              print('[]')
-          GETSKIPPED
-          )
-          echo "Skipped examples: $SKIPPED_JSON"
+          SKIPPED_JSON="${{ needs.prepare.outputs.skipped_json }}"
 
           cd _site
 
