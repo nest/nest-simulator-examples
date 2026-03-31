@@ -1,0 +1,82 @@
+name: Convert PyNEST examples to notebooks
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Pre-release tag (e.g. vMAJOR.MINOR-rcN) — used to check out nest-simulator and derive NEST version"
+        required: true
+  repository_dispatch:
+    types: [pre-release-sync]
+
+run-name: Convert notebooks for ${{ github.event.client_payload.tag || inputs.tag }}
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    env:
+      KERNEL_NAME: ebrains-experimental
+      DISPLAY_NAME: "EBRAINS-experimental"
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Resolve tag and NEST version
+        run: |
+          TAG="${{ github.event.client_payload.tag || inputs.tag }}"
+          NEST_VERSION=$(echo "$TAG" | sed 's/^v//' | grep -oE '^[0-9]+\.[0-9]+')
+          echo "TAG=$TAG"                   >> "$GITHUB_ENV"
+          echo "NEST_VERSION=$NEST_VERSION" >> "$GITHUB_ENV"
+          echo "Tag          : $TAG"
+          echo "NEST version : $NEST_VERSION"
+
+      - name: Create output branch
+        run: git checkout -B "$TAG"
+
+      - name: Checkout nest-simulator
+        uses: actions/checkout@v4
+        with:
+          repository: nest/nest-simulator
+          ref: ${{ env.TAG }}
+          token: ${{ secrets.API_TOKEN_GITHUB }}
+          path: nest-simulator
+
+      - name: Copy Python example files
+        run: |
+          rsync -aP \
+            --exclude '**.png' \
+            --exclude '**.gif' \
+            nest-simulator/pynest/examples/ \
+            notebooks/notebooks/
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install jupytext yq ipykernel nbformat pyyaml
+
+      - name: Convert to notebooks
+        run: |
+          python -m ipykernel install --user --name "$KERNEL_NAME" --display-name "$DISPLAY_NAME"
+
+          yq -r '.examples[] | select(.convert_to_notebook == true) | .path' \
+            nest-simulator/pynest/examples/examples.yml > convert.txt
+
+          cd notebooks/notebooks/
+          while read line; do
+            jupytext --set-kernel "$KERNEL_NAME" --to notebook "$line"
+          done < ../../convert.txt
+
+      - name: Inject version cell into notebooks
+        run: |
+          python .github/scripts/inject_version_cell.py \
+            --notebooks-dir notebooks/notebooks \
+            --examples-yml  nest-simulator/pynest/examples/examples.yml \
+            --nest-version  "$NEST_VERSION"
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add notebooks/
+          git commit -m "Convert PyNEST examples to notebooks for NEST $NEST_VERSION ($TAG)"
+          git push origin HEAD
